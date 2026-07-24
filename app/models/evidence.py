@@ -41,6 +41,7 @@ class Evidence(BaseModel, SoftDeleteMixin):
         nullable=False,
         index=True,
     )
+    review_comment: Mapped[str | None] = mapped_column(Text)
     reviewed_by_id: Mapped[int | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL")
     )

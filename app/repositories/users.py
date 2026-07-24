@@ -45,6 +45,17 @@ class UserRepository(BaseRepository[User]):
             or 0
         )
 
+    def active_with_role(self, role_code: str) -> list[User]:
+        stmt = (
+            select(User)
+            .join(UserRole, UserRole.user_id == User.id)
+            .join(Role, Role.id == UserRole.role_id)
+            .options(selectinload(User.role_links).selectinload(UserRole.role))
+            .where(User.is_active.is_(True), Role.code == role_code, Role.is_active.is_(True))
+            .order_by(User.display_name.asc())
+        )
+        return list(db.session.scalars(stmt).unique())
+
     def roles(self) -> list[Role]:
         return list(
             db.session.scalars(

@@ -110,3 +110,99 @@ def respondent_user(make_user):
         display_name="Respondedor",
         role_codes=("respondent",),
     )
+
+@pytest.fixture()
+def reviewer_user(make_user):
+    return make_user(
+        "reviewer@example.com",
+        display_name="Revisor",
+        role_codes=("reviewer",),
+    )
+
+@pytest.fixture()
+def phase4_catalog(admin_user):
+    from decimal import Decimal
+    from app.enums import QuestionRevisionStatus, QuestionnaireStatus
+    from app.models import (
+        AnswerOption,
+        AnswerSet,
+        BusinessFunction,
+        MaturityLevel,
+        Organization,
+        PracticeStream,
+        Question,
+        QuestionnaireVersion,
+        QuestionnaireVersionQuestion,
+        QuestionQualityCriterion,
+        QuestionRevision,
+        SecurityPractice,
+    )
+
+    organization = Organization(
+        name="Cliente Fase 4",
+        slug="cliente-fase-4-fixture",
+        created_by_id=admin_user.id,
+        updated_by_id=admin_user.id,
+    )
+    function = BusinessFunction(code="GOV-FIX", name="Governance", sort_order=1)
+    practice = SecurityPractice(code="SM-FIX", name="Strategy & Metrics", business_function=function, sort_order=1)
+    stream = PracticeStream(code="A-FIX", name="Stream A", security_practice=practice, sort_order=1)
+    level = MaturityLevel(level_number=1, name="Nivel 1", max_score=Decimal("1"), sort_order=1)
+    answer_set = AnswerSet(external_code="AS-FIX", name="Respuesta prueba", content_hash="c" * 64)
+    answer_set.options.extend([
+        AnswerOption(option_code="NO", text="No implementado", weight=Decimal("0"), sort_order=1),
+        AnswerOption(option_code="YES", text="Implementado", weight=Decimal("1"), sort_order=2),
+    ])
+    question = Question(external_code="G-SM-A-1-FIX", canonical_name="Pregunta prueba", current_revision_number=1)
+    revision = QuestionRevision(
+        question=question,
+        revision_number=1,
+        business_function=function,
+        security_practice=practice,
+        practice_stream=stream,
+        maturity_level=level,
+        answer_set=answer_set,
+        question_text="¿Existe una estrategia de seguridad medible?",
+        guidance_text="Revisar estrategia aprobada.",
+        content_hash="d" * 64,
+        status=QuestionRevisionStatus.PUBLISHED,
+    )
+    revision.criteria.append(QuestionQualityCriterion(criterion_text="Aprobada por la dirección", sort_order=1))
+    version = QuestionnaireVersion(
+        name="SAMM Test Fixture",
+        version_number="test-fixture-4.0",
+        status=QuestionnaireStatus.PUBLISHED,
+        created_by_id=admin_user.id,
+        updated_by_id=admin_user.id,
+    )
+    version.question_links.append(QuestionnaireVersionQuestion(question_revision=revision, sort_order=1, is_required=True))
+    db.session.add_all([organization, function, practice, stream, level, answer_set, question, version])
+    db.session.commit()
+    return organization, version
+
+
+@pytest.fixture()
+def phase4_assessment(phase4_catalog, admin_user, respondent_user, reviewer_user):
+    from app.enums import AssessmentStatus, ScoringSource
+    from app.repositories.assessments import assessment_repository
+    from app.repositories.catalog import catalog_repository
+    from app.services.assessment_service import assessment_service
+
+    organization, version_summary = phase4_catalog
+    version = catalog_repository.questionnaire_version_by_public_id(version_summary.public_id)
+    assessment = assessment_service.create(
+        organization_id=organization.id,
+        questionnaire_version=version,
+        name="Assessment de prueba",
+        description="Prueba de flujo",
+        scope="Aplicación crítica",
+        start_date=None,
+        target_date=None,
+        target_maturity_level="2",
+        scoring_source=ScoringSource.APPROVED,
+        respondent_ids=[respondent_user.id],
+        reviewer_ids=[reviewer_user.id],
+        actor_id=admin_user.id,
+    )
+    assessment_service.transition(assessment, AssessmentStatus.IN_PROGRESS, admin_user.id)
+    return assessment_repository.get_by_public_id(assessment.public_id)

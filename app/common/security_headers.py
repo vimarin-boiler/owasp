@@ -34,6 +34,6 @@ def register_security_headers(app: Flask) -> None:
             response.headers.setdefault(
                 "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
             )
-        if request.path.startswith("/auth") or request.path.startswith("/admin"):
+        if request.path.startswith(("/auth", "/admin", "/assessments")):
             response.headers.setdefault("Cache-Control", "no-store")
         return response

@@ -63,10 +63,12 @@ def create_app(config_name: str | None = None, config_overrides: dict | None = N
     from app.admin import bp as admin_bp
     from app.api import v1_bp
     from app.auth import bp as auth_bp
+    from app.assessments import bp as assessments_bp
     from app.catalog import bp as catalog_bp
     from app.dashboard import bp as dashboard_bp
 
     app.register_blueprint(auth_bp)
+    app.register_blueprint(assessments_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(catalog_bp)
     app.register_blueprint(dashboard_bp)
@@ -143,6 +145,13 @@ def _register_error_handlers(app: Flask) -> None:
     @app.errorhandler(404)
     def not_found(error):
         return render_template("errors/404.html"), 404
+
+    @app.errorhandler(413)
+    def request_too_large(error):
+        return render_template(
+            "errors/413.html",
+            maximum_mb=app.config.get("MAX_REQUEST_CONTENT_LENGTH_MB", 200),
+        ), 413
 
     @app.errorhandler(500)
     def internal_error(error):

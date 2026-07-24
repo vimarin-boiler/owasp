@@ -1,0 +1,118 @@
+openapi: 3.1.0
+info:
+  title: NTT DevSecOps Assessment Internal API
+  version: 1.0.0-phase4
+  description: API interna versionada para catálogo SAMM, assessments, respuestas y evidencias.
+servers:
+  - url: /api/v1
+security:
+  - sessionCookie: []
+paths:
+  /health:
+    get:
+      security: []
+      summary: Estado de salud de la aplicación
+      responses:
+        '200': {description: Aplicación disponible}
+  /questionnaire-versions/:
+    get:
+      summary: Lista versiones del cuestionario
+      responses:
+        '200': {description: Versiones visibles}
+        '401': {description: Sesión requerida}
+  /questions/:
+    get:
+      summary: Lista preguntas maestras activas
+      parameters:
+        - in: query
+          name: q
+          schema: {type: string}
+      responses:
+        '200': {description: Catálogo de preguntas}
+  /questions/{question_id}/:
+    get:
+      summary: Detalle de una pregunta maestra
+      parameters:
+        - $ref: '#/components/parameters/QuestionId'
+      responses:
+        '200': {description: Pregunta y alternativas}
+        '404': {description: Pregunta no encontrada}
+  /assessments/:
+    get:
+      summary: Lista assessments autorizados para el usuario
+      responses:
+        '200': {description: Assessments y avance}
+  /assessments/{assessment_id}/:
+    get:
+      summary: Detalle de un assessment autorizado
+      parameters:
+        - $ref: '#/components/parameters/AssessmentId'
+      responses:
+        '200': {description: Assessment, asignaciones y progreso}
+        '403': {description: Usuario no asignado}
+  /assessments/{assessment_id}/questions/:
+    get:
+      summary: Preguntas instanciadas del assessment
+      parameters:
+        - $ref: '#/components/parameters/AssessmentId'
+      responses:
+        '200': {description: Preguntas, snapshots y respuestas}
+        '403': {description: Usuario no asignado}
+  /responses/{assessment_question_id}/:
+    put:
+      summary: Guarda borrador, respuesta o envío a revisión
+      parameters:
+        - in: path
+          name: assessment_question_id
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResponseWrite'
+      responses:
+        '200': {description: Respuesta guardada}
+        '403': {description: El usuario no es respondedor asignado}
+        '409': {description: Transición o datos inválidos}
+  /evidences/{evidence_id}/:
+    get:
+      summary: Metadatos de una evidencia autorizada
+      parameters:
+        - in: path
+          name: evidence_id
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        '200': {description: Metadatos, hash y estado de validación}
+        '403': {description: Acceso denegado}
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: samm_session
+  parameters:
+    AssessmentId:
+      in: path
+      name: assessment_id
+      required: true
+      schema: {type: string, format: uuid}
+    QuestionId:
+      in: path
+      name: question_id
+      required: true
+      schema: {type: string, format: uuid}
+  schemas:
+    ResponseWrite:
+      type: object
+      properties:
+        selected_option_code: {type: [string, 'null']}
+        respondent_comment: {type: [string, 'null'], maxLength: 10000}
+        is_not_applicable: {type: boolean, default: false}
+        not_applicable_justification: {type: [string, 'null'], maxLength: 5000}
+        intent:
+          type: string
+          enum: [autosave, save, submit]
+          default: save

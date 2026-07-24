@@ -54,3 +54,34 @@ def test_catalog_migration_up_and_down():
             catalog.downgrade()
             initial.downgrade()
         assert inspect(connection).get_table_names() == []
+
+
+def _load_workflow_migration():
+    path = Path(__file__).parents[1] / "migrations" / "versions" / "0003_assessment_workflow.py"
+    spec = importlib.util.spec_from_file_location("workflow_migration", path)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_workflow_migration_up_and_down():
+    initial = _load_initial_migration()
+    catalog = _load_catalog_migration()
+    workflow = _load_workflow_migration()
+    engine = create_engine("sqlite:///:memory:")
+    with engine.begin() as connection:
+        context = MigrationContext.configure(connection, opts={"render_as_batch": True})
+        with Operations.context(context):
+            initial.upgrade()
+            catalog.upgrade()
+            workflow.upgrade()
+        inspector = inspect(connection)
+        assert len(inspector.get_table_names()) == 31
+        assert "assessment_review_notes" in inspector.get_table_names()
+        assert "review_comment" in {column["name"] for column in inspector.get_columns("evidences")}
+        with Operations.context(context):
+            workflow.downgrade()
+            catalog.downgrade()
+            initial.downgrade()
+        assert inspect(connection).get_table_names() == []

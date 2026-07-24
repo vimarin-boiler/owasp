@@ -36,7 +36,10 @@
           </a>
         {% endif %}
         <span class="nav-section">Assessment</span>
-        <span class="sidebar-link disabled" aria-disabled="true">{{ icon('clipboard-check') }} <span>Assessments <small>Fase 4</small></span></span>
+        <a class="sidebar-link {% if request.endpoint and request.endpoint.startswith('assessments.') and request.endpoint != 'assessments.review_queue' %}active{% endif %}" href="{{ url_for('assessments.index') }}">{{ icon('clipboard-check') }} <span>Assessments <small>Ejecución</small></span></a>
+        {% if current_user.has_role('admin') or current_user.has_role('reviewer') %}
+        <a class="sidebar-link {% if request.endpoint == 'assessments.review_queue' or request.endpoint == 'assessments.review_question' %}active{% endif %}" href="{{ url_for('assessments.review_queue') }}">{{ icon('shield-check') }} <span>Revisión <small>Cola</small></span></a>
+        {% endif %}
         {% if current_user.has_role('admin') %}
         <a class="sidebar-link {% if request.endpoint and request.endpoint.startswith('catalog.') %}active{% endif %}" href="{{ url_for('catalog.index') }}">
           {{ icon('diagram-3-fill') }} <span>Catálogo SAMM <small>Versionado</small></span>

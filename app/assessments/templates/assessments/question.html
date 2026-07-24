@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% from 'macros/icons.html' import icon %}
+{% block title %}{{ question.external_code_snapshot }} | {{ assessment.name }}{% endblock %}
+{% block page_context %}Respuesta del cuestionario{% endblock %}
+{% block content %}
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<div class="question-page-header">
+  <div><a href="{{ url_for('assessments.questionnaire', assessment_public_id=assessment.public_id) }}">{{ icon('arrow-left') }} Volver al cuestionario</a><span>{{ assessment.name }}</span></div>
+  <span class="status-chip status-{{ question.current_status.value }}"><i></i>{{ status_labels.get(question.current_status.value, question.current_status.value) }}</span>
+</div>
+<div class="question-layout">
+  {% include 'assessments/_question_sidebar.html' %}
+  <div class="question-workspace">
+    <article class="question-card mb-4">
+      <div class="question-card-meta"><span class="question-code">{{ question.external_code_snapshot }}</span><span class="level-pill">Nivel {{ question.maturity_level_snapshot.number }}</span><span>{{ question.business_function_snapshot.name }} / {{ question.security_practice_snapshot.name }} / {{ question.practice_stream_snapshot.name }}</span></div>
+      <h1>{{ question.question_text_snapshot }}</h1>
+      {% if question.guidance_snapshot %}<div class="guidance-box"><strong>{{ icon('info-circle') }} Orientación</strong><p>{{ question.guidance_snapshot }}</p></div>{% endif %}
+      {% if question.criteria_snapshot %}<div class="criteria-box"><strong>Criterios de calidad</strong><ul>{% for criterion in question.criteria_snapshot %}<li>{{ criterion.text }}</li>{% endfor %}</ul></div>{% endif %}
+    </article>
+
+    {% set response_locked = question.response and question.response.status.value in ['submitted','approved'] %}
+    <section class="content-card mb-4">
+      <div class="card-heading"><div><span class="section-label">Respuesta</span><h2>Evaluación declarada</h2></div>{% if question.response %}<small>Versión {{ question.response.response_version }}</small>{% endif %}</div>
+      {% if question.response and question.response.reviewer_comment %}<div class="review-feedback status-{{ question.response.status.value }}"><strong>{{ icon('chat-left-text') }} Observación del revisor</strong><p>{{ question.response.reviewer_comment }}</p></div>{% endif %}
+      <form method="post" id="assessmentResponseForm" data-autosave-url="{{ url_for('assessments.autosave', assessment_public_id=assessment.public_id, question_public_id=question.public_id) }}" data-autosave-seconds="{{ config.ASSESSMENT_AUTOSAVE_SECONDS }}" data-response-form novalidate>
+        {{ response_form.hidden_tag() }}
+        <fieldset {% if not can_respond or response_locked %}disabled{% endif %}>
+          <div class="answer-choice-list" data-answer-options>
+          {% for subfield in response_form.selected_option_code %}
+            <label class="answer-choice {% if subfield.checked %}selected{% endif %}">{{ subfield(class='form-check-input', data_response_input='option') }}<span><strong>{{ subfield.label.text.rsplit(' · ',1)[0] }}</strong><small>Ponderación: {{ subfield.label.text.rsplit(' · ',1)[1] }}</small></span></label>
+          {% endfor %}
+          </div>
+          {% for error in response_form.selected_option_code.errors %}<div class="text-danger small mt-2">{{ error }}</div>{% endfor %}
+          <div class="form-check form-switch no-apply-switch">{{ response_form.is_not_applicable(class='form-check-input', data_not_applicable='true') }}{{ response_form.is_not_applicable.label(class='form-check-label fw-semibold') }}</div>
+          <div class="mb-3" data-not-applicable-container>{{ response_form.not_applicable_justification.label(class='form-label fw-semibold') }}{{ response_form.not_applicable_justification(class='form-control', rows='3', placeholder='Explica por qué la pregunta no forma parte del alcance evaluado...') }}{% for error in response_form.not_applicable_justification.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</div>
+          <div class="mb-3">{{ response_form.respondent_comment.label(class='form-label fw-semibold') }}{{ response_form.respondent_comment(class='form-control', rows='4', placeholder='Describe la situación actual, controles existentes y contexto relevante...') }}{% for error in response_form.respondent_comment.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</div>
+        </fieldset>
+        {% if can_respond and not response_locked %}<div class="response-actions"><span class="autosave-state" data-autosave-state>{{ icon('cloud-check') }} Sin cambios pendientes</span><div><button class="btn btn-outline-secondary" name="{{ response_form.save_draft.name }}" value="y" type="submit">{{ icon('cloud-arrow-down') }} Guardar borrador</button><button class="btn btn-outline-primary" name="{{ response_form.save.name }}" value="y" type="submit">{{ icon('save') }} Guardar respuesta</button><button class="btn btn-primary" name="{{ response_form.submit_review.name }}" value="y" type="submit">{{ icon('send') }} Enviar a revisión</button></div></div>{% elif response_locked %}<div class="alert alert-info mb-0">La respuesta está bloqueada mientras se encuentra enviada o aprobada.</div>{% elif can_review %}<div class="text-end"><a class="btn btn-primary" href="{{ url_for('assessments.review_question', assessment_public_id=assessment.public_id, question_public_id=question.public_id) }}">{{ icon('shield-check') }} Revisar respuesta</a></div>{% endif %}
+      </form>
+    </section>
+
+    <section class="content-card mb-4">
+      <div class="card-heading"><div><span class="section-label">Trazabilidad documental</span><h2>Evidencias</h2></div><span class="environment-badge">Máx. {{ config.MAX_EVIDENCE_FILES_PER_QUESTION }} archivos</span></div>
+      {% set active_evidences = question.evidences|selectattr('is_active')|list %}
+      {% if active_evidences %}<div class="evidence-list">{% for evidence in active_evidences %}<article class="evidence-item"><span class="evidence-icon">{{ icon('file-earmark-lock2') }}</span><div><strong>{{ evidence.original_filename }}</strong><small>{{ (evidence.size_bytes / 1024)|round(1) }} KB · SHA-256 {{ evidence.sha256[:12] }}…</small>{% if evidence.description %}<p>{{ evidence.description }}</p>{% endif %}</div><span class="status-chip evidence-{{ evidence.validation_status.value }}"><i></i>{{ evidence.validation_status.value }}</span><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('assessments.download_evidence', evidence_public_id=evidence.public_id) }}" title="Descargar">{{ icon('download') }}</a>{% if can_respond and evidence.uploaded_by_id == current_user.id and not response_locked %}<form method="post" action="{{ url_for('assessments.delete_evidence', evidence_public_id=evidence.public_id) }}" data-confirm="¿Eliminar esta evidencia?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline-danger" type="submit" title="Eliminar">{{ icon('trash') }}</button></form>{% endif %}</article>{% endfor %}</div>{% else %}<div class="empty-state"><p>No hay evidencias adjuntas a esta pregunta.</p></div>{% endif %}
+      {% if can_respond and not response_locked %}<form class="evidence-upload mt-3" method="post" enctype="multipart/form-data" action="{{ url_for('assessments.upload_evidences', assessment_public_id=assessment.public_id, question_public_id=question.public_id) }}">{{ evidence_form.hidden_tag() }}<div class="row g-2 align-items-end"><div class="col-lg-6">{{ evidence_form.evidences.label(class='form-label fw-semibold') }}{{ evidence_form.evidences(class='form-control', multiple=true, accept='.pdf,.docx,.xlsx,.pptx,.txt,.csv,.png,.jpg,.jpeg,.zip') }}</div><div class="col-lg-4">{{ evidence_form.description.label(class='form-label fw-semibold') }}{{ evidence_form.description(class='form-control', placeholder='Descripción opcional') }}</div><div class="col-lg-2"><button class="btn btn-outline-primary w-100" type="submit">{{ icon('paperclip') }} Adjuntar</button></div></div><small class="form-text">Validación por firma, MIME, extensión, tamaño y hash SHA-256. Los archivos se almacenan fuera de la carpeta pública.</small></form>{% endif %}
+    </section>
+
+    <nav class="question-navigation" aria-label="Navegación entre preguntas">
+      {% if previous_item %}<a class="btn btn-outline-secondary" href="{{ url_for('assessments.question', assessment_public_id=assessment.public_id, question_public_id=previous_item.public_id) }}">{{ icon('arrow-left') }} Anterior</a>{% else %}<span></span>{% endif %}
+      <span>{{ (questions|map(attribute='id')|list).index(question.id) + 1 }} de {{ questions|length }}</span>
+      {% if next_item %}<a class="btn btn-outline-secondary" href="{{ url_for('assessments.question', assessment_public_id=assessment.public_id, question_public_id=next_item.public_id) }}">Siguiente {{ icon('arrow-right') }}</a>{% endif %}
+    </nav>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/assessment.js') }}"></script>{% endblock %}

@@ -49,6 +49,9 @@ class Assessment(BaseModel, ActorAuditMixin):
     questions: Mapped[list["AssessmentQuestion"]] = relationship(
         back_populates="assessment", cascade="all, delete-orphan", order_by="AssessmentQuestion.sort_order"
     )
+    review_notes: Mapped[list["AssessmentReviewNote"]] = relationship(
+        back_populates="assessment", cascade="all, delete-orphan", order_by=lambda: AssessmentReviewNote.created_at.desc()
+    )
 
 
 class AssessmentUser(BaseModel):
@@ -79,6 +82,7 @@ class AssessmentUser(BaseModel):
 
     assessment: Mapped[Assessment] = relationship(back_populates="assignments")
     user: Mapped["User"] = relationship(foreign_keys=[user_id])
+    assigned_by: Mapped["User | None"] = relationship(foreign_keys=[assigned_by_id])
 
 
 class AssessmentQuestion(BaseModel):
@@ -122,3 +126,25 @@ class AssessmentQuestion(BaseModel):
     evidences: Mapped[list["Evidence"]] = relationship(
         back_populates="assessment_question", cascade="all, delete-orphan"
     )
+
+
+class AssessmentReviewNote(BaseModel):
+    __tablename__ = "assessment_review_notes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    assessment_id: Mapped[int] = mapped_column(
+        ForeignKey("assessments.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    author_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    is_resolved: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    resolved_by_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+
+    assessment: Mapped[Assessment] = relationship(back_populates="review_notes")
+    author: Mapped["User"] = relationship(foreign_keys=[author_id])
+    resolved_by: Mapped["User | None"] = relationship(foreign_keys=[resolved_by_id])

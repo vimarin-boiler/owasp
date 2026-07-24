@@ -10,9 +10,11 @@ from app.common.errors import DomainError
 from app.common.validators import normalize_email
 from config import validate_runtime_config
 from app.extensions import db
-from app.models import Organization, QuestionnaireVersion, Role, User, UserRole
+from app.models import Assessment, Organization, QuestionnaireVersion, Role, User, UserRole
 from app.services.auth_service import auth_service
 from app.services.samm_import_service import catalog_import_service
+from app.services.assessment_service import assessment_service
+from app.enums import AssessmentStatus, QuestionnaireStatus, ScoringSource
 
 ROLE_SEED = (
     ("admin", "Administrador", "Administración global de la plataforma."),
@@ -109,6 +111,78 @@ def seed() -> None:
         click.echo(f"Cuestionario SAMM importado y publicado: {version.version_number}")
     elif has_version:
         click.echo("El catálogo SAMM ya contiene una versión; se omitió la importación inicial.")
+
+    if current_app.config.get("CREATE_DEMO_DATA", False):
+        respondent_password = current_app.config.get("DEMO_RESPONDENT_PASSWORD", "")
+        reviewer_password = current_app.config.get("DEMO_REVIEWER_PASSWORD", "")
+        if not respondent_password or not reviewer_password:
+            raise click.ClickException(
+                "DEMO_RESPONDENT_PASSWORD y DEMO_REVIEWER_PASSWORD son obligatorias cuando CREATE_DEMO_DATA=true."
+            )
+
+        def ensure_demo_user(name: str, email_value: str, password_value: str, role_code: str) -> User:
+            normalized_email = normalize_email(email_value)
+            user = db.session.scalar(select(User).where(User.email_normalized == normalized_email))
+            if user is None:
+                user = User(
+                    display_name=name,
+                    email=email_value,
+                    email_normalized=normalized_email,
+                    password_hash=auth_service.hash_password(password_value),
+                    must_change_password=True,
+                    is_active=True,
+                )
+                db.session.add(user)
+                db.session.flush()
+                user.role_links.append(UserRole(user_id=user.id, role_id=roles[role_code].id, assigned_by_id=admin.id))
+                click.echo(f"Usuario demo creado: {user.email}")
+            elif not user.has_role(role_code):
+                user.role_links.append(UserRole(user_id=user.id, role_id=roles[role_code].id, assigned_by_id=admin.id))
+            return user
+
+        respondent = ensure_demo_user(
+            current_app.config["DEMO_RESPONDENT_NAME"],
+            current_app.config["DEMO_RESPONDENT_EMAIL"],
+            respondent_password,
+            "respondent",
+        )
+        reviewer = ensure_demo_user(
+            current_app.config["DEMO_REVIEWER_NAME"],
+            current_app.config["DEMO_REVIEWER_EMAIL"],
+            reviewer_password,
+            "reviewer",
+        )
+        db.session.commit()
+
+        published_version = db.session.scalar(
+            select(QuestionnaireVersion)
+            .where(QuestionnaireVersion.status == QuestionnaireStatus.PUBLISHED)
+            .order_by(QuestionnaireVersion.published_at.desc())
+        )
+        demo_assessment = db.session.scalar(
+            select(Assessment).where(Assessment.organization_id == demo.id, Assessment.name == "Assessment SAMM Demo")
+        )
+        if published_version and demo_assessment is None:
+            from app.repositories.catalog import catalog_repository
+            detailed_version = catalog_repository.questionnaire_version_by_public_id(published_version.public_id)
+            demo_assessment = assessment_service.create(
+                organization_id=demo.id,
+                questionnaire_version=detailed_version,
+                name="Assessment SAMM Demo",
+                description="Evaluación demostrativa creada durante la inicialización.",
+                scope="Alcance de demostración para validar el flujo de respuestas y revisión.",
+                start_date=None,
+                target_date=None,
+                target_maturity_level="2",
+                scoring_source=ScoringSource.APPROVED,
+                respondent_ids=[respondent.id],
+                reviewer_ids=[reviewer.id],
+                actor_id=admin.id,
+            )
+            assessment_service.transition(demo_assessment, AssessmentStatus.IN_PROGRESS, admin.id)
+            click.echo("Assessment de demostración creado e iniciado.")
+        elif published_version is None:
+            click.echo("No hay una versión publicada; se omitió el assessment de demostración.")
 
     click.echo("Seed completado correctamente.")
 

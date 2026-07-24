@@ -10,6 +10,6 @@ def test_complete_phase_three_schema_is_registered(app):
         "assessments", "assessment_users", "assessment_questions", "assessment_responses",
         "response_history", "evidences", "reviews", "recommendations", "audit_logs",
         "application_settings", "notifications", "assessment_score_snapshots",
-        "assessment_score_items", "catalog_imports",
+        "assessment_score_items", "catalog_imports", "assessment_review_notes",
     }
     assert expected == set(db.metadata.tables)

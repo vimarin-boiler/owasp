@@ -1,4 +1,4 @@
-from app.models.assessment import Assessment, AssessmentQuestion, AssessmentUser
+from app.models.assessment import Assessment, AssessmentQuestion, AssessmentReviewNote, AssessmentUser
 from app.models.audit import ApplicationSetting, AuditLog, Notification
 from app.models.catalog import (
     AnswerOption,
@@ -42,6 +42,7 @@ __all__ = [
     "Assessment",
     "AssessmentUser",
     "AssessmentQuestion",
+    "AssessmentReviewNote",
     "AssessmentResponse",
     "ResponseHistory",
     "Review",

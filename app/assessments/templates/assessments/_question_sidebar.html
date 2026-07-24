@@ -1,0 +1,33 @@
+<aside class="question-sidebar">
+  <div class="question-sidebar-head">
+    <span class="section-label">Navegación SAMM</span>
+    <strong>{{ progress.percentage }}% completado</strong>
+    <div class="progress" role="progressbar" aria-label="Avance" aria-valuenow="{{ progress.percentage }}" aria-valuemin="0" aria-valuemax="100">
+      <div class="progress-bar" style="width: {{ progress.percentage }}%"></div>
+    </div>
+  </div>
+  <nav class="question-tree" aria-label="Jerarquía del cuestionario">
+    {% for function in hierarchy %}
+    <details {% if question is defined and question.business_function_snapshot.code == function.code %}open{% endif %}>
+      <summary><span>{{ function.code }}</span>{{ function.name }} <small>{{ function.total }}</small></summary>
+      {% for practice in function.practices %}
+      <details class="tree-level-2" {% if question is defined and question.security_practice_snapshot.code == practice.code %}open{% endif %}>
+        <summary>{{ practice.name }} <small>{{ practice.total }}</small></summary>
+        {% for stream in practice.streams %}
+        <div class="tree-stream">
+          <span>{{ stream.name }}</span>
+          {% for item in stream.questions %}
+          <a class="tree-question {% if question is defined and question.id == item.id %}active{% endif %}" href="{{ url_for('assessments.question', assessment_public_id=assessment.public_id, question_public_id=item.public_id) }}" title="{{ item.question_text_snapshot }}">
+            <i class="state-dot state-{{ item.current_status.value }}"></i>
+            <span>{{ item.external_code_snapshot }}</span>
+            <small>N{{ item.maturity_level_snapshot.number }}</small>
+          </a>
+          {% endfor %}
+        </div>
+        {% endfor %}
+      </details>
+      {% endfor %}
+    </details>
+    {% endfor %}
+  </nav>
+</aside>

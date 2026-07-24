@@ -1,10 +1,19 @@
 from __future__ import annotations
 
-from flask import Blueprint, abort, current_app, jsonify, request
-from flask_login import login_required
+from pathlib import Path
 
+from flask import Blueprint, abort, current_app, jsonify, request, send_file
+from flask_login import current_user, login_required
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+
+from app.common.assessment_access import can_respond, can_view_assessment
+from app.common.errors import DomainError
 from app.common.permissions import roles_required
-from app.repositories.catalog import catalog_repository
+from app.extensions import db
+from app.models import Assessment, AssessmentQuestion
+from app.repositories import assessment_repository, catalog_repository, evidence_repository
+from app.services import assessment_service, response_service
 from app.version import __version__
 
 bp = Blueprint("api_v1", __name__, url_prefix="/api/v1")
@@ -13,6 +22,14 @@ bp = Blueprint("api_v1", __name__, url_prefix="/api/v1")
 @bp.get("/health")
 def health():
     return jsonify(status="ok", application=current_app.config["APP_NAME"], version=__version__)
+
+
+@bp.get("/openapi.yaml")
+@login_required
+@roles_required("admin", "reviewer", "respondent")
+def openapi_document():
+    document = Path(current_app.root_path).parent / "docs" / "openapi-v1.yaml"
+    return send_file(document, mimetype="application/yaml", as_attachment=False, max_age=0)
 
 
 @bp.get("/questions/")
@@ -84,4 +101,153 @@ def questionnaire_versions():
             for item in items
         ],
         count=len(items),
+    )
+
+
+@bp.get("/assessments/")
+@login_required
+@roles_required("admin", "reviewer", "respondent")
+def assessments():
+    items = assessment_repository.list_all() if current_user.has_role("admin") else assessment_repository.for_user(current_user.id)
+    data = []
+    for item in items:
+        progress = assessment_service.progress(item)
+        data.append(
+            {
+                "id": item.public_id,
+                "name": item.name,
+                "organization": {"id": item.organization.public_id, "name": item.organization.name},
+                "questionnaire_version": item.questionnaire_version.version_number,
+                "status": item.status.value,
+                "target_date": item.target_date.isoformat() if item.target_date else None,
+                "progress": progress,
+            }
+        )
+    return jsonify(data=data, count=len(data))
+
+
+@bp.get("/assessments/<uuid:assessment_public_id>/")
+@login_required
+@roles_required("admin", "reviewer", "respondent")
+def assessment_detail(assessment_public_id):
+    assessment = assessment_repository.get_by_public_id(str(assessment_public_id))
+    if assessment is None:
+        abort(404)
+    if not can_view_assessment(current_user, assessment):
+        abort(403)
+    return jsonify(
+        data={
+            "id": assessment.public_id,
+            "name": assessment.name,
+            "description": assessment.description,
+            "scope": assessment.scope,
+            "status": assessment.status.value,
+            "organization": {"id": assessment.organization.public_id, "name": assessment.organization.name},
+            "questionnaire_version": assessment.questionnaire_version.version_number,
+            "target_maturity_level": str(assessment.target_maturity_level) if assessment.target_maturity_level is not None else None,
+            "scoring_source": assessment.scoring_source.value,
+            "progress": assessment_service.progress(assessment),
+            "assignments": [
+                {"user_id": item.user.public_id, "display_name": item.user.display_name, "role": item.assignment_role.value}
+                for item in assessment.assignments
+            ],
+        }
+    )
+
+
+@bp.get("/assessments/<uuid:assessment_public_id>/questions/")
+@login_required
+@roles_required("admin", "reviewer", "respondent")
+def assessment_questions(assessment_public_id):
+    assessment = assessment_repository.get_by_public_id(str(assessment_public_id))
+    if assessment is None:
+        abort(404)
+    if not can_view_assessment(current_user, assessment):
+        abort(403)
+    items = assessment_repository.questions(assessment.id)
+    return jsonify(
+        data=[
+            {
+                "id": item.public_id,
+                "external_code": item.external_code_snapshot,
+                "question_text": item.question_text_snapshot,
+                "status": item.current_status.value,
+                "maturity_level": item.maturity_level_snapshot,
+                "business_function": item.business_function_snapshot,
+                "security_practice": item.security_practice_snapshot,
+                "practice_stream": item.practice_stream_snapshot,
+                "response": {
+                    "selected_option_code": item.response.selected_option_code,
+                    "selected_weight": str(item.response.selected_weight_snapshot) if item.response.selected_weight_snapshot is not None else None,
+                    "is_not_applicable": item.response.is_not_applicable,
+                    "version": item.response.response_version,
+                } if item.response else None,
+            }
+            for item in items
+        ],
+        count=len(items),
+    )
+
+
+@bp.put("/responses/<uuid:assessment_question_public_id>/")
+@login_required
+@roles_required("respondent")
+def save_response(assessment_question_public_id):
+    question = db.session.scalar(
+        select(AssessmentQuestion)
+        .options(
+            selectinload(AssessmentQuestion.assessment).selectinload(Assessment.assignments),
+            selectinload(AssessmentQuestion.response),
+        )
+        .where(AssessmentQuestion.public_id == str(assessment_question_public_id))
+    )
+    if question is None:
+        abort(404)
+    if not can_respond(current_user, question.assessment):
+        abort(403)
+    payload = request.get_json(silent=True) or {}
+    try:
+        response = response_service.save(
+            question,
+            actor_id=current_user.id,
+            selected_option_code=payload.get("selected_option_code"),
+            respondent_comment=payload.get("respondent_comment"),
+            is_not_applicable=bool(payload.get("is_not_applicable")),
+            not_applicable_justification=payload.get("not_applicable_justification"),
+            intent=payload.get("intent", "save"),
+        )
+    except DomainError as exc:
+        db.session.rollback()
+        return jsonify(error={"code": "validation_error", "message": str(exc)}), 409
+    return jsonify(
+        data={
+            "id": response.public_id,
+            "status": response.status.value,
+            "version": response.response_version,
+            "updated_at": response.updated_at.isoformat(),
+        }
+    )
+
+
+@bp.get("/evidences/<uuid:evidence_public_id>/")
+@login_required
+@roles_required("admin", "reviewer", "respondent")
+def evidence_detail(evidence_public_id):
+    evidence = evidence_repository.get_active_by_public_id(str(evidence_public_id))
+    if evidence is None:
+        abort(404)
+    if not can_view_assessment(current_user, evidence.assessment_question.assessment):
+        abort(403)
+    return jsonify(
+        data={
+            "id": evidence.public_id,
+            "filename": evidence.original_filename,
+            "mime_type": evidence.detected_mime_type,
+            "extension": evidence.extension,
+            "size_bytes": evidence.size_bytes,
+            "sha256": evidence.sha256,
+            "validation_status": evidence.validation_status.value,
+            "uploaded_at": evidence.uploaded_at.isoformat(),
+            "download_url": f"/assessments/evidences/{evidence.public_id}/download",
+        }
     )

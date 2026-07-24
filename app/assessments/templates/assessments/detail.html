@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% from 'macros/icons.html' import icon %}
+{% block title %}{{ assessment.name }} | {{ app_name }}{% endblock %}
+{% block page_context %}Detalle del assessment{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><span class="section-label">{{ assessment.organization.name }}</span><h1>{{ assessment.name }}</h1><p>{{ assessment.scope or assessment.description or 'Assessment de madurez OWASP SAMM.' }}</p></div>
+  <div class="d-flex flex-wrap gap-2">{% if can_manage %}<a class="btn btn-outline-secondary" href="{{ url_for('assessments.edit', assessment_public_id=assessment.public_id) }}">{{ icon('pencil') }} Editar</a>{% endif %}<a class="btn btn-primary" href="{{ url_for('assessments.questionnaire', assessment_public_id=assessment.public_id) }}">{{ icon('clipboard-check') }} Abrir cuestionario</a></div>
+</div>
+<div class="assessment-hero mb-4">
+  <div><span class="status-chip status-{{ assessment.status.value }}"><i></i>{{ status_labels.get(assessment.status.value, assessment.status.value) }}</span><h2>{{ progress.percentage }}%</h2><p>Avance general</p></div>
+  <div class="hero-progress"><div class="progress"><div class="progress-bar" style="width:{{ progress.percentage }}%"></div></div><span>{{ progress.completed }} de {{ progress.total }} preguntas con respuesta</span></div>
+  <div class="hero-meta"><span><small>Versión</small><strong>{{ assessment.questionnaire_version.version_number }}</strong></span><span><small>Fecha objetivo</small><strong>{{ assessment.target_date.strftime('%d-%m-%Y') if assessment.target_date else 'No definida' }}</strong></span><span><small>Nivel objetivo</small><strong>{{ assessment.target_maturity_level if assessment.target_maturity_level is not none else 'No definido' }}</strong></span></div>
+</div>
+<div class="row g-3 mb-4">
+  {% for value, label, icon_name in [(progress.counts.approved,'Aprobadas','check-circle-fill'),(progress.counts.submitted,'En revisión','hourglass-split'),(progress.counts.observed,'Observadas','exclamation-circle-fill'),(progress.counts.rejected,'Rechazadas','x-circle-fill'),(progress.counts.unanswered,'Pendientes','circle'),(progress.evidences,'Evidencias','paperclip')] %}
+  <div class="col-6 col-lg-2"><div class="metric-card compact"><span class="metric-icon">{{ icon(icon_name) }}</span><div><span>{{ label }}</span><strong>{{ value }}</strong></div></div></div>
+  {% endfor %}
+</div>
+<div class="row g-4">
+  <div class="col-xl-8">
+    <section class="content-card mb-4"><div class="card-heading"><div><span class="section-label">Equipo</span><h2>Usuarios asignados</h2></div></div>
+      {% if assessment.assignments %}<div class="assignment-grid">{% for assignment in assessment.assignments %}<div class="assignment-person"><span class="user-avatar small">{{ assignment.user.display_name[:1]|upper }}</span><span><strong>{{ assignment.user.display_name }}</strong><small>{{ 'Respondedor' if assignment.assignment_role.value == 'respondent' else 'Revisor' }}{% if assignment.is_lead %} · Principal{% endif %}</small></span></div>{% endfor %}</div>{% else %}<div class="empty-state"><p>No hay usuarios asignados.</p></div>{% endif %}
+    </section>
+    <section class="content-card"><div class="card-heading"><div><span class="section-label">Revisión</span><h2>Observaciones generales</h2></div></div>
+      {% if assessment.review_notes %}<div class="review-note-list">{% for note in assessment.review_notes %}<article class="review-note {% if note.is_resolved %}resolved{% endif %}"><div><strong>{{ note.author.display_name }}</strong><small>{{ note.created_at.strftime('%d-%m-%Y %H:%M') }}</small></div><p>{{ note.body }}</p>{% if note.is_resolved %}<span class="status-chip status-approved"><i></i>Resuelta</span>{% elif can_review %}<form method="post" action="{{ url_for('assessments.resolve_review_note', assessment_public_id=assessment.public_id, note_public_id=note.public_id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline-success" type="submit">{{ icon('check2') }} Marcar resuelta</button></form>{% endif %}</article>{% endfor %}</div>{% else %}<div class="empty-state"><p>No existen observaciones generales.</p></div>{% endif %}
+      {% if can_review %}<form class="mt-3" method="post" action="{{ url_for('assessments.add_review_note', assessment_public_id=assessment.public_id) }}">{{ note_form.hidden_tag() }}{{ note_form.body(class='form-control', placeholder='Registra una observación transversal para el equipo respondedor...') }}<div class="text-end mt-2"><button class="btn btn-outline-primary" type="submit">{{ icon('chat-left-text') }} Agregar observación</button></div></form>{% endif %}
+    </section>
+  </div>
+  <div class="col-xl-4">
+    <section class="content-card mb-4"><div class="card-heading"><div><span class="section-label">Acciones</span><h2>Flujo del assessment</h2></div></div>
+      <div class="quick-actions"><a href="{{ url_for('assessments.questionnaire', assessment_public_id=assessment.public_id) }}">{{ icon('list-check') }}<span><strong>Continuar cuestionario</strong><small>Revisar preguntas y avance</small></span>{{ icon('chevron-right') }}</a>{% if can_review %}<a href="{{ url_for('assessments.review_queue') }}">{{ icon('shield-check') }}<span><strong>Cola de revisión</strong><small>Respuestas enviadas</small></span>{{ icon('chevron-right') }}</a>{% endif %}</div>
+      {% if can_manage %}<div class="status-actions mt-3">
+        {% set transitions = {'draft':['configured','cancelled'],'configured':['draft','in_progress','cancelled'],'in_progress':['in_review','observed','cancelled'],'in_review':['in_progress','observed','completed','cancelled'],'observed':['in_progress','in_review','cancelled'],'completed':['in_review','published','closed'],'published':['in_review','closed']} %}
+        {% for target in transitions.get(assessment.status.value, []) %}<form method="post" action="{{ url_for('assessments.transition', assessment_public_id=assessment.public_id, target_status=target) }}">{{ transition_form.hidden_tag() }}<button class="btn btn-sm {% if target == 'cancelled' %}btn-outline-danger{% else %}btn-outline-secondary{% endif %}" type="submit">{{ status_labels.get(target,target) }}</button></form>{% endfor %}
+      </div>{% endif %}
+    </section>
+    <section class="content-card"><div class="card-heading"><div><span class="section-label">Información</span><h2>Configuración</h2></div></div><dl class="detail-list"><div><dt>Inicio</dt><dd>{{ assessment.start_date.strftime('%d-%m-%Y') if assessment.start_date else 'No definido' }}</dd></div><div><dt>Fuente de cálculo</dt><dd>{{ assessment.scoring_source.value }}</dd></div><div><dt>No aplicables</dt><dd>{{ progress.not_applicable }}</dd></div><div><dt>Creado</dt><dd>{{ assessment.created_at.strftime('%d-%m-%Y') }}</dd></div></dl></section>
+  </div>
+</div>
+{% endblock %}

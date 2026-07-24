@@ -14,9 +14,11 @@ app = create_app(
 
 with app.app_context():
     db.create_all()
-    assert len(db.metadata.tables) == 29
+    assert len(db.metadata.tables) == 31
     client = app.test_client()
     response = client.get("/api/v1/health")
     assert response.status_code == 200
     assert response.get_json()["status"] == "ok"
-    print("Smoke check OK: aplicación, API y 29 tablas inicializadas.")
+    openapi = client.get("/api/v1/openapi.yaml")
+    assert openapi.status_code == 200
+    print("Smoke check OK: aplicación, API y 31 tablas inicializadas.")

@@ -38,7 +38,12 @@ class BaseConfig:
 
     UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", str(BASE_DIR / "uploads"))
     MAX_CONTENT_LENGTH_MB = env_int("MAX_CONTENT_LENGTH_MB", 20)
-    MAX_CONTENT_LENGTH = MAX_CONTENT_LENGTH_MB * 1024 * 1024
+    MAX_EVIDENCE_FILES_PER_QUESTION = env_int("MAX_EVIDENCE_FILES_PER_QUESTION", 10)
+    MAX_REQUEST_CONTENT_LENGTH_MB = env_int(
+        "MAX_REQUEST_CONTENT_LENGTH_MB",
+        MAX_CONTENT_LENGTH_MB * MAX_EVIDENCE_FILES_PER_QUESTION,
+    )
+    MAX_CONTENT_LENGTH = MAX_REQUEST_CONTENT_LENGTH_MB * 1024 * 1024
     ALLOWED_EXTENSIONS = {
         item.strip().lower()
         for item in os.getenv(
@@ -46,7 +51,6 @@ class BaseConfig:
         ).split(",")
         if item.strip()
     }
-    MAX_EVIDENCE_FILES_PER_QUESTION = env_int("MAX_EVIDENCE_FILES_PER_QUESTION", 10)
 
     CATALOG_IMPORT_FOLDER = os.getenv(
         "CATALOG_IMPORT_FOLDER", str(BASE_DIR / "instance" / "catalog_imports")
@@ -77,6 +81,13 @@ class BaseConfig:
     INITIAL_ADMIN_NAME = os.getenv("INITIAL_ADMIN_NAME", "Administrador")
     INITIAL_ADMIN_EMAIL = os.getenv("INITIAL_ADMIN_EMAIL", "admin@example.com")
     INITIAL_ADMIN_PASSWORD = os.getenv("INITIAL_ADMIN_PASSWORD", "")
+    CREATE_DEMO_DATA = env_bool("CREATE_DEMO_DATA", False)
+    DEMO_RESPONDENT_NAME = os.getenv("DEMO_RESPONDENT_NAME", "Respondedor Demo")
+    DEMO_RESPONDENT_EMAIL = os.getenv("DEMO_RESPONDENT_EMAIL", "respondent@example.com")
+    DEMO_RESPONDENT_PASSWORD = os.getenv("DEMO_RESPONDENT_PASSWORD", "")
+    DEMO_REVIEWER_NAME = os.getenv("DEMO_REVIEWER_NAME", "Revisor Demo")
+    DEMO_REVIEWER_EMAIL = os.getenv("DEMO_REVIEWER_EMAIL", "reviewer@example.com")
+    DEMO_REVIEWER_PASSWORD = os.getenv("DEMO_REVIEWER_PASSWORD", "")
 
     ASSESSMENT_AUTOSAVE_SECONDS = env_int("ASSESSMENT_AUTOSAVE_SECONDS", 30)
     RATELIMIT_STORAGE_URI = os.getenv("RATELIMIT_STORAGE_URI", "memory://")

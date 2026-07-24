@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% from 'macros/icons.html' import icon %}
+{% block title %}Cola de revisión | {{ app_name }}{% endblock %}
+{% block page_context %}Revisión de respuestas{% endblock %}
+{% block content %}
+<div class="page-header"><div><span class="section-label">Control de calidad</span><h1>Cola de revisión</h1><p>Respuestas enviadas por los equipos respondedores y pendientes de decisión.</p></div><a class="btn btn-outline-secondary" href="{{ url_for('assessments.index') }}">{{ icon('arrow-left') }} Assessments</a></div>
+<section class="content-card p-0 overflow-hidden">
+{% if questions %}<div class="table-responsive"><table class="table modern-table align-middle"><thead><tr><th>Pregunta</th><th>Assessment</th><th>Organización</th><th>Evidencias</th><th>Enviada</th><th></th></tr></thead><tbody>{% for question in questions %}<tr><td><div class="entity-cell"><span class="entity-icon">{{ icon('patch-question') }}</span><span><strong>{{ question.external_code_snapshot }}</strong><small>{{ question.question_text_snapshot|truncate(85) }}</small></span></div></td><td>{{ question.assessment.name }}</td><td>{{ question.assessment.organization.name }}</td><td><span class="badge text-bg-light">{{ question.evidences|selectattr('is_active')|list|length }}</span></td><td>{{ question.response.submitted_at.strftime('%d-%m-%Y %H:%M') if question.response and question.response.submitted_at else '-' }}</td><td class="text-end"><a class="btn btn-sm btn-primary" href="{{ url_for('assessments.review_question', assessment_public_id=question.assessment.public_id, question_public_id=question.public_id) }}">{{ icon('shield-check') }} Revisar</a></td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty-state large">{{ icon('check2-circle', 48) }}<h2>Cola al día</h2><p>No hay respuestas pendientes de revisión.</p></div>{% endif %}
+</section>
+{% endblock %}

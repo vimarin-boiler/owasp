@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.4.0 — 2026-07-24
+
+### Agregado
+
+- Gestión completa de organizaciones y assessments vinculados a una versión publicada del cuestionario.
+- Snapshot inmutable de preguntas, criterios, alternativas, ponderaciones y jerarquía al crear un assessment.
+- Asignación independiente de respondedores y revisores, con responsables principales.
+- Cuestionario navegable por función, práctica, flujo y estado, con búsqueda de texto y progreso por sección.
+- Guardado manual, borrador y autosave configurable de respuestas.
+- Flujo de envío, aprobación, observación, rechazo y reapertura con historial versionado.
+- Observaciones generales del assessment y notificaciones internas.
+- Carga múltiple, descarga autorizada, eliminación controlada y validación de evidencias.
+- Cola de revisión para administradores y revisores.
+- Endpoints API v1 para assessments, preguntas, respuestas y metadatos de evidencias.
+- Especificación OpenAPI de la API interna.
+- Migración `0003_assessment_workflow`.
+- Datos demo opcionales para respondedor, revisor y assessment inicial.
+
+### Seguridad
+
+- Verificación de ownership y asignación en todas las rutas del assessment.
+- Nombres internos UUID y almacenamiento privado fuera de `static`.
+- Inspección de firmas, MIME efectivo y estructura de archivos Office/ZIP.
+- Rechazo de ejecutables, scripts, traversal, enlaces simbólicos y bombas ZIP.
+- Hash SHA-256, prevención de duplicados y cuarentena previa a la publicación del archivo.
+- Encabezados de descarga segura y auditoría de carga, descarga, eliminación y revisión.
+- `CREATE_DEMO_DATA` deshabilitado por defecto; el entorno de ejemplo debe habilitarlo explícitamente.
+
+
 ## 0.3.0 — 2026-07-24
 
 ### Agregado

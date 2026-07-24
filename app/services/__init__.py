@@ -1,3 +1,8 @@
+from app.services.assessment_service import assessment_service
+from app.services.evidence_service import evidence_service
+from app.services.notification_service import notification_service
+from app.services.response_service import response_service
+from app.services.review_service import review_service
 from app.services.audit_service import audit_service
 from app.services.auth_service import auth_service
 from app.services.catalog_export_service import catalog_export_service
@@ -9,7 +14,12 @@ from app.services.samm_workbook_parser import samm_workbook_parser
 from app.services.user_service import user_service
 
 __all__ = [
+    "assessment_service",
     "audit_service",
+    "evidence_service",
+    "notification_service",
+    "response_service",
+    "review_service",
     "auth_service",
     "catalog_export_service",
     "catalog_import_service",

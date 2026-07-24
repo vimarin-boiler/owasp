@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% from 'macros/icons.html' import icon %}
+{% block title %}Cuestionario | {{ assessment.name }}{% endblock %}
+{% block page_context %}Cuestionario OWASP SAMM{% endblock %}
+{% block content %}
+<div class="page-header"><div><span class="section-label">{{ assessment.organization.name }}</span><h1>{{ assessment.name }}</h1><p>Filtra el cuestionario por jerarquía, estado o texto y continúa desde cualquier pregunta.</p></div><a class="btn btn-outline-secondary" href="{{ url_for('assessments.detail', assessment_public_id=assessment.public_id) }}">{{ icon('arrow-left') }} Resumen</a></div>
+<div class="question-layout">
+  {% include 'assessments/_question_sidebar.html' %}
+  <div class="question-workspace">
+    <section class="content-card mb-3"><form method="get" class="row g-2">
+      <div class="col-lg-3"><input class="form-control" name="q" value="{{ request.args.get('q','') }}" placeholder="Buscar pregunta"></div>
+      <div class="col-lg-2"><select class="form-select" name="function"><option value="">Función</option>{% for item in filter_functions %}<option value="{{ item.code }}" {% if request.args.get('function') == item.code %}selected{% endif %}>{{ item.name }}</option>{% endfor %}</select></div>
+      <div class="col-lg-2"><select class="form-select" name="practice"><option value="">Práctica</option>{% for item in filter_practices %}<option value="{{ item.code }}" {% if request.args.get('practice') == item.code %}selected{% endif %}>{{ item.name }}</option>{% endfor %}</select></div>
+      <div class="col-lg-2"><select class="form-select" name="stream"><option value="">Flujo</option>{% for item in filter_streams %}<option value="{{ item.code }}" {% if request.args.get('stream') == item.code %}selected{% endif %}>{{ item.name }}</option>{% endfor %}</select></div>
+      <div class="col-lg-1"><select class="form-select" name="state"><option value="">Estado</option>{% for code in ['unanswered','draft','answered','submitted','observed','rejected','approved'] %}<option value="{{ code }}" {% if request.args.get('state') == code %}selected{% endif %}>{{ status_labels.get(code,code) }}</option>{% endfor %}</select></div>
+      <div class="col-lg-2 d-flex gap-2"><button class="btn btn-primary flex-fill" type="submit">{{ icon('funnel') }} Filtrar</button><a class="btn btn-outline-secondary" href="{{ url_for('assessments.questionnaire', assessment_public_id=assessment.public_id) }}">{{ icon('x-lg') }}</a></div>
+    </form></section>
+    <section class="content-card p-0 overflow-hidden">
+      {% if questions %}<div class="question-list">{% for item in questions %}<a href="{{ url_for('assessments.question', assessment_public_id=assessment.public_id, question_public_id=item.public_id) }}"><span class="question-code">{{ item.external_code_snapshot }}</span><span class="question-list-body"><strong>{{ item.question_text_snapshot }}</strong><small>{{ item.business_function_snapshot.name }} / {{ item.security_practice_snapshot.name }} / {{ item.practice_stream_snapshot.name }}</small></span><span class="level-pill">N{{ item.maturity_level_snapshot.number }}</span><span class="status-chip status-{{ item.current_status.value }}"><i></i>{{ status_labels.get(item.current_status.value,item.current_status.value) }}</span>{{ icon('chevron-right') }}</a>{% endfor %}</div>{% else %}<div class="empty-state large">{{ icon('search', 42) }}<h2>Sin resultados</h2><p>No hay preguntas que coincidan con los filtros.</p></div>{% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

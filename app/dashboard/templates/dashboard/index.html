@@ -4,86 +4,28 @@
 {% block page_context %}Resumen operativo{% endblock %}
 {% block content %}
 <div class="page-header">
-  <div>
-    <span class="section-label">Vista general</span>
-    <h1>Dashboard de madurez DevSecOps</h1>
-    <p>Supervisa usuarios, organizaciones y actividad de la plataforma. El catálogo OWASP SAMM ya está disponible; los indicadores de ejecución se habilitarán al crear assessments.</p>
-  </div>
-  <span class="environment-badge">Fase 3 · Catálogo SAMM</span>
+  <div><span class="section-label">Vista general</span><h1>Dashboard de madurez DevSecOps</h1><p>Supervisa evaluaciones, avance, respuestas pendientes y actividad de la plataforma OWASP SAMM.</p></div>
+  <span class="environment-badge">Fase 4 · Ejecución y revisión</span>
 </div>
-
 {% if is_admin %}
 <div class="row g-3 mb-4">
-  <div class="col-sm-6 col-xl-3">
-    <div class="metric-card">
-      <span class="metric-icon">{{ icon('people-fill', 22) }}</span>
-      <div><span>Usuarios activos</span><strong>{{ active_users }}</strong><small>Con acceso habilitado</small></div>
-    </div>
-  </div>
-  <div class="col-sm-6 col-xl-3">
-    <div class="metric-card">
-      <span class="metric-icon">{{ icon('building', 22) }}</span>
-      <div><span>Organizaciones</span><strong>{{ active_organizations }}</strong><small>Clientes habilitados</small></div>
-    </div>
-  </div>
-  <div class="col-sm-6 col-xl-3">
-    <div class="metric-card">
-      <span class="metric-icon">{{ icon('patch-question', 22) }}</span>
-      <div><span>Preguntas SAMM</span><strong>{{ catalog_questions }}</strong><small>Revisiones vigentes activas</small></div>
-    </div>
-  </div>
-  <div class="col-sm-6 col-xl-3">
-    <div class="metric-card">
-      <span class="metric-icon">{{ icon('layers-fill', 22) }}</span>
-      <div><span>Versiones</span><strong>{{ questionnaire_versions }}</strong><small>Publicadas, borrador o archivadas</small></div>
-    </div>
-  </div>
+  {% for value, label, note, icon_name in [(total_assessments,'Assessments','Total registrados','clipboard-data'),(active_assessments,'Activos','En curso o configurados','activity'),(average_progress|string + '%','Avance promedio','Sobre assessments visibles','graph-up-arrow'),(pending_review,'Pendientes de revisión','Respuestas enviadas','shield-check'),(active_organizations,'Organizaciones','Clientes habilitados','building'),(active_users,'Usuarios activos','Con acceso habilitado','people-fill')] %}
+  <div class="col-sm-6 col-xl-2"><div class="metric-card compact"><span class="metric-icon">{{ icon(icon_name,22) }}</span><div><span>{{ label }}</span><strong class="metric-text">{{ value }}</strong><small>{{ note }}</small></div></div></div>
+  {% endfor %}
 </div>
-
-<div class="row g-4">
-  <div class="col-xl-8">
-    <section class="content-card h-100">
-      <div class="card-heading">
-        <div><span class="section-label">Trazabilidad</span><h2>Actividad reciente</h2></div>
-        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.audit') }}">Ver auditoría</a>
-      </div>
-      {% if recent_activity %}
-        <div class="activity-list">
-          {% for event in recent_activity %}
-          <div class="activity-item">
-            <span class="activity-icon">{{ icon('journal-text', 17) }}</span>
-            <div>
-              <strong>{{ event.action }}</strong>
-              <span>{{ event.actor.display_name if event.actor else 'Sistema' }} · {{ event.entity_type }}</span>
-            </div>
-            <time datetime="{{ event.occurred_at.isoformat() }}">{{ event.occurred_at.strftime('%d-%m-%Y %H:%M') }}</time>
-          </div>
-          {% endfor %}
-        </div>
-      {% else %}
-        <div class="empty-state"><p>Aún no existen eventos de auditoría.</p></div>
-      {% endif %}
-    </section>
-  </div>
-  <div class="col-xl-4">
-    <section class="content-card h-100">
-      <div class="card-heading"><div><span class="section-label">Accesos directos</span><h2>Administración</h2></div></div>
-      <div class="quick-actions">
-        <a href="{{ url_for('admin.user_create') }}">{{ icon('person-plus-fill') }}<span><strong>Crear usuario</strong><small>Asignar roles y acceso</small></span>{{ icon('chevron-right') }}</a>
-        <a href="{{ url_for('admin.organization_create') }}">{{ icon('building') }}<span><strong>Crear organización</strong><small>Registrar un cliente</small></span>{{ icon('chevron-right') }}</a>
-        <a href="{{ url_for('catalog.index') }}">{{ icon('diagram-3-fill') }}<span><strong>Administrar catálogo</strong><small>Preguntas, versiones e importaciones</small></span>{{ icon('chevron-right') }}</a>
-        <a href="{{ url_for('admin.audit') }}">{{ icon('shield-check') }}<span><strong>Revisar auditoría</strong><small>Consultar acciones recientes</small></span>{{ icon('chevron-right') }}</a>
-      </div>
-    </section>
-  </div>
-</div>
-{% else %}
-<section class="content-card">
-  <div class="empty-state large">
-    {{ icon('clipboard-check', 52) }}
-    <h2>No tienes assessments asignados</h2>
-    <p>Los assessments disponibles aparecerán aquí cuando un administrador los asigne.</p>
-  </div>
-</section>
 {% endif %}
+<div class="row g-4 mb-4">
+  <div class="col-xl-8">
+    <section class="content-card h-100"><div class="card-heading"><div><span class="section-label">Ejecución</span><h2>{{ 'Assessments recientes' if is_admin else 'Mis assessments asignados' }}</h2></div><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('assessments.index') }}">Ver todos</a></div>
+      {% if assessment_cards %}<div class="dashboard-assessment-list">{% for assessment, progress in assessment_cards %}<a href="{{ url_for('assessments.detail', assessment_public_id=assessment.public_id) }}"><span class="entity-icon">{{ icon('clipboard-check') }}</span><span><strong>{{ assessment.name }}</strong><small>{{ assessment.organization.name }} · {{ assessment.status.value }}</small><span class="progress mt-2"><span class="progress-bar" style="width:{{ progress.percentage }}%"></span></span></span><b>{{ progress.percentage }}%</b>{{ icon('chevron-right') }}</a>{% endfor %}</div>{% else %}<div class="empty-state"><p>No existen assessments disponibles.</p></div>{% endif %}
+    </section>
+  </div>
+  <div class="col-xl-4"><section class="content-card h-100"><div class="card-heading"><div><span class="section-label">Accesos directos</span><h2>Operación</h2></div></div><div class="quick-actions">
+    {% if is_admin %}<a href="{{ url_for('assessments.create') }}">{{ icon('plus-circle') }}<span><strong>Crear assessment</strong><small>Seleccionar versión y responsables</small></span>{{ icon('chevron-right') }}</a>{% endif %}
+    <a href="{{ url_for('assessments.index') }}">{{ icon('clipboard-check') }}<span><strong>Abrir assessments</strong><small>Continuar ejecución</small></span>{{ icon('chevron-right') }}</a>
+    {% if is_admin or current_user.has_role('reviewer') %}<a href="{{ url_for('assessments.review_queue') }}">{{ icon('shield-check') }}<span><strong>Cola de revisión</strong><small>{{ pending_review }} respuestas pendientes</small></span>{{ icon('chevron-right') }}</a>{% endif %}
+    {% if is_admin %}<a href="{{ url_for('catalog.index') }}">{{ icon('diagram-3-fill') }}<span><strong>Catálogo SAMM</strong><small>{{ catalog_questions }} preguntas / {{ questionnaire_versions }} versiones</small></span>{{ icon('chevron-right') }}</a>{% endif %}
+  </div></section></div>
+</div>
+{% if is_admin %}<section class="content-card"><div class="card-heading"><div><span class="section-label">Trazabilidad</span><h2>Actividad reciente</h2></div><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.audit') }}">Ver auditoría</a></div>{% if recent_activity %}<div class="activity-list">{% for event in recent_activity %}<div class="activity-item"><span class="activity-icon">{{ icon('journal-text',17) }}</span><div><strong>{{ event.action }}</strong><span>{{ event.actor.display_name if event.actor else 'Sistema' }} · {{ event.entity_type }}</span></div><time>{{ event.occurred_at.strftime('%d-%m-%Y %H:%M') }}</time></div>{% endfor %}</div>{% else %}<div class="empty-state"><p>Aún no existen eventos de auditoría.</p></div>{% endif %}</section>{% endif %}
 {% endblock %}

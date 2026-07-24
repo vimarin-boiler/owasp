@@ -1,0 +1,4 @@
+{% extends 'base.html' %}
+{% from 'macros/icons.html' import icon %}
+{% block title %}Solicitud demasiado grande | {{ app_name }}{% endblock %}
+{% block content %}<section class="content-card"><div class="empty-state large">{{ icon('file-earmark-x',52) }}<div class="error-code">413</div><h2>La carga supera el límite permitido</h2><p>Reduce la cantidad o el tamaño de los archivos. El máximo total por solicitud es {{ maximum_mb }} MB.</p><a class="btn btn-primary" href="{{ url_for('assessments.index') }}">Volver</a></div></section>{% endblock %}

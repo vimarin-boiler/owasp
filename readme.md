@@ -1,42 +1,40 @@
-# NTT DevSecOps Assessment — Fase 3
+# NTT DevSecOps Assessment — Fase 4
 
-Plataforma web segura para administrar assessments de madurez DevSecOps basados en OWASP SAMM.
+Aplicación web segura para administrar y ejecutar assessments de madurez DevSecOps basados en OWASP SAMM.
 
-Esta entrega incorpora la **Fase 3: Catálogo SAMM** sobre la base ejecutable de la Fase 2. Incluye importación transaccional desde Excel, administración de la jerarquía, preguntas con revisiones inmutables, conjuntos de respuesta ponderados, versiones publicables y exportación compatible.
+Esta entrega incorpora la **Fase 4: ejecución del assessment** sobre el catálogo versionado de la Fase 3. Permite crear assessments por organización, instanciar snapshots inmutables del cuestionario, asignar respondedores y revisores, responder preguntas, adjuntar evidencias privadas y completar el ciclo de revisión.
 
-## Capacidades disponibles
+## Estado de la solución
 
-### Base de aplicación
+### Disponible en esta fase
 
-- Python 3.12 o superior y Flask con Application Factory.
+- Application Factory Flask y Blueprints modulares.
 - SQLAlchemy 2.x, Flask-Migrate y Alembic.
-- SQLite para desarrollo, con modelos portables a PostgreSQL.
-- Autenticación Flask-Login y contraseñas Argon2.
+- SQLite con diseño portable a PostgreSQL.
+- Autenticación, Argon2, cambio obligatorio de contraseña y bloqueo temporal.
 - RBAC para administrador, respondedor y revisor.
-- Protección CSRF, rate limiting, CSP y encabezados de seguridad.
-- Auditoría con actor, IP, User-Agent, valores anteriores y posteriores.
-- Bootstrap 5 e iconos locales con estilo corporativo NTT.
+- Administración de usuarios, roles y organizaciones.
+- Catálogo OWASP SAMM importable y versionado.
+- Creación y edición de assessments.
+- Asignación de respondedores y revisores.
+- Snapshot histórico de preguntas, jerarquía, criterios, alternativas y ponderaciones.
+- Cuestionario navegable con filtros, búsqueda y progreso.
+- Guardado como borrador, respuesta y autosave.
+- Envío a revisión, aprobación, observación, rechazo y reapertura.
+- Observaciones generales del assessment.
+- Evidencias múltiples por pregunta con almacenamiento privado.
+- Auditoría y notificaciones internas.
+- API REST interna `/api/v1/` y especificación OpenAPI.
+- Bootstrap 5, Bootstrap Icons y Chart.js locales.
 
-### Catálogo SAMM
+### Próximas fases
 
-- Importación de `SAMM_spreadsheet.xlsx` mediante `openpyxl`.
-- Vista previa antes de confirmar.
-- Validación por hoja, fila y campo.
-- Verificación segura del contenedor XLSX.
-- Hash SHA-256 del archivo fuente.
-- Prevención de duplicados mediante hashes de contenido.
-- Rollback completo ante errores.
-- CRUD de funciones, prácticas, flujos y niveles.
-- Administración de conjuntos de respuestas y ponderaciones.
-- Preguntas con criterios de calidad e historial de revisiones.
-- Duplicación de preguntas.
-- Versiones de cuestionario en borrador, publicadas o archivadas.
-- Exportación a Excel de cualquier versión.
-- API autenticada de preguntas y versiones.
+- Fase 5: motor de puntuación, dashboards de resultados, brechas, recomendaciones y roadmap.
+- Fase 6: reportes PDF/Excel finales, backup/restore, Docker y despliegue productivo documentado.
 
-## Resultado del archivo incluido
+## Datos SAMM incluidos
 
-El archivo `data/SAMM_spreadsheet.xlsx` fue validado con el siguiente resultado:
+El workbook `data/SAMM_spreadsheet.xlsx` contiene y valida:
 
 | Elemento | Cantidad |
 |---|---:|
@@ -48,31 +46,54 @@ El archivo `data/SAMM_spreadsheet.xlsx` fue validado con el siguiente resultado:
 | Conjuntos de respuesta | 24 |
 | Criterios de calidad | 295 |
 
-No se detectaron errores ni advertencias.
+## Arquitectura
+
+```text
+Navegador
+   │ HTTPS / sesión / CSRF
+   ▼
+Nginx (fase de despliegue)
+   │
+   ▼
+Gunicorn → Flask Application Factory
+             ├── auth
+             ├── admin
+             ├── catalog
+             ├── assessments
+             ├── dashboard
+             └── api/v1
+                    │
+      ┌─────────────┴─────────────┐
+      ▼                           ▼
+SQLAlchemy/Alembic         EvidenceService
+SQLite o PostgreSQL        almacenamiento privado
+```
+
+La lógica funcional se divide en controladores, formularios, servicios y repositorios. Las rutas nunca consultan un assessment únicamente por UUID: también aplican validaciones de rol, asignación y ownership.
 
 ## Estructura principal
 
 ```text
 samm_assessment/
 ├── app/
-│   ├── admin/                    # Usuarios, roles, organizaciones y auditoría
-│   ├── api/v1/                   # API versionada
-│   ├── auth/                     # Login y cambio de contraseña
-│   ├── catalog/                  # Interfaz del catálogo SAMM
-│   ├── common/                   # Seguridad, errores y validadores
-│   ├── dashboard/                # Dashboard por rol
-│   ├── models/                   # 30 tablas SQLAlchemy
-│   ├── repositories/             # Consultas y carga de relaciones
-│   ├── services/                 # Importación, catálogo y versionamiento
-│   ├── static/                   # CSS, JS, Bootstrap e iconos
-│   └── templates/                # Layout y componentes Jinja2
-├── data/
-│   └── SAMM_spreadsheet.xlsx     # Fuente inicial del catálogo
+│   ├── admin/
+│   ├── api/v1/
+│   ├── assessments/
+│   ├── auth/
+│   ├── catalog/
+│   ├── common/
+│   ├── dashboard/
+│   ├── models/
+│   ├── repositories/
+│   ├── services/
+│   ├── static/
+│   └── templates/
+├── data/SAMM_spreadsheet.xlsx
 ├── docs/
-├── migrations/
-│   └── versions/
-│       ├── 0001_initial.py
-│       └── 0002_catalog_imports.py
+├── migrations/versions/
+│   ├── 0001_initial.py
+│   ├── 0002_catalog_imports.py
+│   └── 0003_assessment_workflow.py
 ├── tests/
 ├── uploads/
 ├── instance/
@@ -82,10 +103,12 @@ samm_assessment/
 └── requirements-dev.txt
 ```
 
+El esquema de la Fase 4 contiene **31 tablas**.
+
 ## Requisitos
 
 - Python 3.12 o superior.
-- SQLite 3.
+- SQLite 3 para desarrollo.
 - Windows, Linux o macOS.
 
 ## Instalación en Linux o macOS
@@ -99,16 +122,7 @@ cp .env.example .env
 python scripts/generate_secret.py
 ```
 
-Configura en `.env` una clave segura y una contraseña inicial:
-
-```env
-SECRET_KEY=<valor-aleatorio-de-al-menos-32-caracteres>
-INITIAL_ADMIN_PASSWORD=<contraseña-temporal-segura>
-SAMM_IMPORT_FILE=data/SAMM_spreadsheet.xlsx
-SAMM_DEFAULT_VERSION=2.2.0
-```
-
-Inicializa la plataforma:
+Copia el valor generado a `SECRET_KEY` y reemplaza todas las contraseñas de ejemplo. Luego ejecuta:
 
 ```bash
 flask --app run.py db upgrade
@@ -116,13 +130,7 @@ flask --app run.py seed
 flask --app run.py run
 ```
 
-`flask seed` crea los roles, el administrador, la organización de demostración y, si aún no existe una versión, importa y publica el Excel configurado en `SAMM_IMPORT_FILE`.
-
-La aplicación quedará disponible en:
-
-```text
-http://127.0.0.1:5000
-```
+La aplicación quedará disponible en `http://127.0.0.1:5000`.
 
 ## Instalación en Windows PowerShell
 
@@ -135,7 +143,7 @@ Copy-Item .env.example .env
 python .\scripts\generate_secret.py
 ```
 
-Después de configurar `.env`:
+Después de editar `.env`:
 
 ```powershell
 flask --app run.py db upgrade
@@ -143,35 +151,114 @@ flask --app run.py seed
 flask --app run.py run
 ```
 
-## Importación desde Excel
+## Inicialización y usuarios demo
 
-### Desde la interfaz
+`flask seed` realiza de forma idempotente:
 
-1. Ingresa con rol administrador.
-2. Abre **Catálogo SAMM**.
-3. Selecciona **Importar Excel**.
-4. Carga el archivo `.xlsx`.
-5. Revisa el resumen y los errores por fila.
-6. Define el nombre y número de versión.
-7. Confirma como borrador o publica inmediatamente.
+1. Creación de roles.
+2. Creación del administrador inicial.
+3. Creación de la organización demo.
+4. Importación y publicación del workbook configurado.
+5. Creación opcional de respondedor y revisor demo.
+6. Creación opcional de un assessment SAMM iniciado.
 
-### Desde CLI
+La creación de datos demo está **deshabilitada por defecto en el código**. El archivo `.env.example` la habilita explícitamente con:
 
-Solo validar:
-
-```bash
-flask --app run.py import-samm \
-  --file data/SAMM_spreadsheet.xlsx \
-  --dry-run
+```env
+CREATE_DEMO_DATA=true
 ```
 
-Importar como borrador:
+Para producción usa `CREATE_DEMO_DATA=false`.
+
+Todos los usuarios iniciales quedan obligados a cambiar su contraseña en el primer acceso.
+
+## Flujo administrativo
+
+1. Publicar una versión del cuestionario SAMM.
+2. Crear o seleccionar una organización.
+3. Crear un assessment.
+4. Elegir la versión publicada y el nivel objetivo.
+5. Asignar uno o más respondedores y revisores.
+6. Cambiar el estado a **En ejecución**.
+7. Supervisar avance y revisiones.
+8. Completar el assessment cuando todas las preguntas requeridas estén aprobadas.
+
+Al crear el assessment, la aplicación copia el contenido de cada pregunta a `assessment_questions`. Las modificaciones futuras del catálogo no alteran evaluaciones ya iniciadas.
+
+## Flujo del respondedor
+
+- Visualiza únicamente assessments asignados.
+- Filtra por función, práctica, flujo y estado.
+- Busca preguntas por código o texto.
+- Guarda borradores manualmente o mediante autosave.
+- Selecciona una alternativa o marca **No aplica** con justificación.
+- Adjunta múltiples evidencias.
+- Envía la respuesta a revisión.
+- Corrige respuestas observadas o rechazadas.
+
+El estado de workflow y la aplicabilidad son dimensiones independientes: una respuesta marcada como no aplicable puede estar en borrador, enviada o aprobada, conservando siempre su justificación.
+
+## Flujo del revisor
+
+- Accede solo a assessments asignados, salvo el administrador global.
+- Consulta una cola de respuestas enviadas.
+- Revisa respuesta, comentarios y evidencias.
+- Valida o rechaza cada evidencia.
+- Aprueba, observa o rechaza la respuesta.
+- Reabre respuestas previamente aprobadas.
+- Registra observaciones generales y las marca como resueltas.
+
+Cada transición genera historial de respuesta, registro de revisión, auditoría y notificaciones internas.
+
+## Evidencias
+
+Extensiones iniciales:
+
+```text
+pdf, docx, xlsx, pptx, txt, csv, png, jpg, jpeg, zip
+```
+
+Controles implementados:
+
+- 20 MB por archivo, configurable.
+- Cantidad máxima por pregunta configurable.
+- Almacenamiento fuera de `static`.
+- Directorios por UUID de assessment y pregunta.
+- Nombre interno aleatorio UUID.
+- `secure_filename` para el nombre presentado.
+- Comprobación de firma y tipo efectivo.
+- Inspección del contenido ZIP/Office.
+- Rechazo de traversal, symlinks, ejecutables, scripts y bombas ZIP.
+- Cuarentena temporal antes de mover el archivo.
+- Hash SHA-256 y prevención de duplicados.
+- Interfaz preparada para antivirus o ClamAV.
+- Autorización antes de descargar o eliminar.
+- Descarga forzada con `nosniff`, `sandbox` y `no-store`.
+
+El scanner incluido es un adaptador nulo seguro para desarrollo. En producción debe reemplazarse por una implementación antivirus real antes de aceptar archivos externos.
+
+## Configuración relevante
+
+```env
+DATABASE_URL=sqlite:///instance/samm_assessment.db
+UPLOAD_FOLDER=uploads
+MAX_CONTENT_LENGTH_MB=20
+MAX_EVIDENCE_FILES_PER_QUESTION=10
+MAX_REQUEST_CONTENT_LENGTH_MB=200
+ALLOWED_EXTENSIONS=pdf,docx,xlsx,pptx,txt,csv,png,jpg,jpeg,zip
+ASSESSMENT_AUTOSAVE_SECONDS=30
+SAMM_IMPORT_FILE=data/SAMM_spreadsheet.xlsx
+SAMM_DEFAULT_VERSION=2.2.0
+```
+
+`MAX_CONTENT_LENGTH_MB` controla cada archivo. `MAX_REQUEST_CONTENT_LENGTH_MB` limita el request HTTP completo.
+
+## Importación SAMM
+
+Validar sin persistir:
 
 ```bash
-flask --app run.py import-samm \
-  --file data/SAMM_spreadsheet.xlsx \
-  --name "OWASP SAMM 2.2.0" \
-  --version 2.2.0
+flask --app run.py import-samm --file data/SAMM_spreadsheet.xlsx --dry-run
 ```
 
 Importar y publicar:
@@ -184,59 +271,29 @@ flask --app run.py import-samm \
   --publish
 ```
 
-## Versionamiento
-
-- Cada pregunta tiene un identificador estable y una o más revisiones.
-- Editar una pregunta crea la siguiente revisión.
-- Las revisiones anteriores nunca se sobrescriben.
-- Una versión enlaza revisiones concretas y ordenadas.
-- Publicar una versión archiva la versión publicada anterior.
-- Los conjuntos de respuesta ya utilizados no pueden modificarse.
-- Los elementos jerárquicos utilizados no permiten alterar código, nombre ni relación padre.
-
-## Exportación
-
-Desde el detalle de una versión usa **Exportar**. Se genera un workbook con:
-
-- `Metadata`
-- `imp-questions`
-- `imp-answers`
-
-El resultado puede volver a validarse con el importador.
-
 ## Migraciones
-
-Aplicar todas las migraciones:
 
 ```bash
 flask --app run.py db upgrade
-```
-
-Revertir la última migración:
-
-```bash
+flask --app run.py db current
 flask --app run.py db downgrade
 ```
 
-La Fase 3 agrega la tabla `catalog_imports`, llevando el esquema a 30 tablas.
+La migración `0003_assessment_workflow` agrega las observaciones generales y comentarios de revisión de evidencia.
 
 ## API v1
 
-### Healthcheck público
+- `GET /api/v1/health`
+- `GET /api/v1/openapi.yaml`
+- `GET /api/v1/questions/`
+- `GET /api/v1/questionnaire-versions/`
+- `GET /api/v1/assessments/`
+- `GET /api/v1/assessments/{uuid}/`
+- `GET /api/v1/assessments/{uuid}/questions/`
+- `PUT /api/v1/responses/{assessment_question_uuid}/`
+- `GET /api/v1/evidences/{uuid}/`
 
-```http
-GET /api/v1/health
-```
-
-### Catálogo autenticado
-
-```http
-GET /api/v1/questions/
-GET /api/v1/questions/{uuid}/
-GET /api/v1/questionnaire-versions/
-```
-
-Las rutas del catálogo requieren un usuario autenticado con rol administrador, revisor o respondedor.
+La API usa la sesión autenticada de la aplicación. Los endpoints de escritura siguen protegidos por CSRF cuando se consumen desde el navegador.
 
 ## Pruebas
 
@@ -251,58 +308,48 @@ Con cobertura:
 pytest --cov=app --cov-report=term-missing --cov-report=html
 ```
 
-La suite incluye pruebas de:
+La suite incluye escenarios de:
 
-- Parser del Excel real.
-- Validación de hojas obligatorias.
-- Importación completa.
-- Reimportación idempotente.
-- Rollback.
-- Revisiones de preguntas.
-- Exportación Excel.
-- Autorización de rutas.
+- Creación y snapshot de assessments.
+- Aislamiento por asignación e IDOR.
+- Guardado, envío, revisión y reapertura.
+- Evidencias, hash, duplicados y eliminación.
+- Autenticación y autorización.
+- Importación y versionamiento SAMM.
 - Migraciones.
 
-## Seguridad específica del importador
+También existe un smoke test:
 
-- Solo acepta `.xlsx`.
-- Usa `secure_filename` para el nombre presentado.
-- Genera un nombre interno aleatorio.
-- Almacena cargas temporales fuera de `static`.
-- Limita el tamaño del archivo.
-- Valida cantidad y tamaño descomprimido de los elementos internos.
-- Rechaza relaciones de compresión anómalas.
-- Calcula SHA-256.
-- No ejecuta macros ni fórmulas.
-- Procesa el libro en modo lectura y `data_only`.
-- Ejecuta la aplicación del catálogo dentro de una única transacción.
-- Elimina el archivo temporal después de confirmar.
-
-## Configuración relevante
-
-```env
-CATALOG_IMPORT_FOLDER=instance/catalog_imports
-MAX_CATALOG_IMPORT_MB=15
-SAMM_IMPORT_FILE=data/SAMM_spreadsheet.xlsx
-SAMM_DEFAULT_VERSION=2.2.0
+```bash
+python scripts/smoke_check.py
 ```
 
-## Documentación
+## Seguridad operativa
 
-- `docs/PHASE_3_DELIVERY.md`
-- `docs/IMPORT_FORMAT.md`
-- `docs/CATALOG_VERSIONING.md`
-- `docs/VALIDATION_REPORT_PHASE3.md`
-- Documentación de las fases 1 y 2 conservada en `docs/`.
+Antes de producción:
 
-## Alcance pendiente
+- Usa `FLASK_ENV=production`.
+- Configura `SESSION_COOKIE_SECURE=true` y TLS.
+- Usa una `SECRET_KEY` aleatoria y rotada de forma controlada.
+- Configura `TRUSTED_HOSTS` con nombres reales.
+- Reemplaza el almacenamiento local si se necesita alta disponibilidad.
+- Integra ClamAV o un servicio antimalware.
+- Configura un backend compartido para rate limiting.
+- Restringe permisos del directorio `uploads` al usuario del servicio.
+- Migra a PostgreSQL para concurrencia y operación multiinstancia.
 
-La Fase 4 incorporará:
+## Documentación adicional
 
-- Creación de assessments.
-- Asignación de respondedores y revisores.
-- Instanciación de preguntas desde una versión.
-- Respuestas, borradores y transiciones de estado.
-- Evidencias privadas y flujo de revisión.
+- `docs/PHASE_4_DELIVERY.md`
+- `docs/ASSESSMENT_WORKFLOW.md`
+- `docs/EVIDENCE_SECURITY.md`
+- `docs/openapi-v1.yaml`
+- `docs/VALIDATION_REPORT_PHASE4.md`
+- `docs/PROJECT_TREE_PHASE4.txt`
 
-Las fases 5 y 6 incorporarán scoring, dashboards, brechas, recomendaciones, roadmap, reportes y despliegue productivo completo.
+## Limitaciones conocidas de esta fase
+
+- El cálculo consolidado de madurez y brechas se implementará en la Fase 5.
+- La publicación actual solo registra el estado; la visualización de resultados se habilitará con el motor de scoring.
+- El antivirus por defecto no analiza malware; solo implementa el contrato de integración.
+- Los respaldos, reportes PDF finales y artefactos de despliegue pertenecen a la Fase 6.

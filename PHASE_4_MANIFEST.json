@@ -1,0 +1,54 @@
+{
+  "project": "NTT DevSecOps Assessment",
+  "phase": 4,
+  "version": "0.4.0",
+  "generated_at": "2026-07-24",
+  "scope": "Organizations, assessments, assignments, questionnaire responses, private evidence and review workflow",
+  "database_tables": 31,
+  "jinja_templates": 44,
+  "test_functions": 41,
+  "samm_source": {
+    "path": "data/SAMM_spreadsheet.xlsx",
+    "sha256": "c7e32c0673891d79f12596ca9ce41fa95d40e7fd8c44698333eb84d0ff6c6f2b",
+    "business_functions": 5,
+    "security_practices": 15,
+    "practice_streams": 30,
+    "maturity_levels": 3,
+    "questions": 90,
+    "answer_sets": 24,
+    "quality_criteria": 295,
+    "errors": 0,
+    "warnings": 0
+  },
+  "migrations": [
+    "0001_initial",
+    "0002_catalog_imports",
+    "0003_assessment_workflow"
+  ],
+  "phase4_features": [
+    "Immutable assessment question snapshots",
+    "Respondent and reviewer assignments",
+    "Draft, autosave and submission workflow",
+    "Approval, observation, rejection and reopening",
+    "Private evidence storage and validation",
+    "Assessment review notes and notifications",
+    "Assignment-aware access control and IDOR prevention",
+    "Authenticated API v1 and OpenAPI document"
+  ],
+  "validation": {
+    "python_compile": "passed",
+    "sqlalchemy_mappers": "passed",
+    "sqlite_create_all": "passed_31_tables",
+    "migration_upgrade": "passed_31_tables",
+    "migration_full_downgrade": "passed_0_tables",
+    "jinja_parse": "passed_44_templates",
+    "url_references": "passed",
+    "javascript_syntax": "passed",
+    "samm_parser": "passed",
+    "pytest": "not_executed_missing_flask_dependencies"
+  },
+  "known_next_scope": [
+    "Scoring and results dashboards (Phase 5)",
+    "Reports and deployment artifacts (Phase 6)"
+  ]
+}

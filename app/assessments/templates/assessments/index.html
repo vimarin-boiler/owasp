@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% from 'macros/icons.html' import icon %}
+{% block title %}Assessments | {{ app_name }}{% endblock %}
+{% block page_context %}Ejecución de assessments{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><span class="section-label">OWASP SAMM</span><h1>Assessments de madurez</h1><p>Gestiona evaluaciones, asignaciones, avance de respuestas, revisión y evidencias.</p></div>
+  {% if current_user.has_role('admin') %}<a class="btn btn-primary" href="{{ url_for('assessments.create') }}">{{ icon('plus-lg') }} Nuevo assessment</a>{% endif %}
+</div>
+<section class="content-card mb-4">
+  <form method="get" class="row g-2 align-items-end">
+    <div class="col-lg-6"><label class="form-label" for="q">Buscar</label><input class="form-control" id="q" name="q" value="{{ search }}" placeholder="Nombre del assessment u organización"></div>
+    <div class="col-lg-3"><label class="form-label" for="status">Estado</label><select class="form-select" id="status" name="status"><option value="">Todos</option>{% for code, label in status_labels.items() %}{% if code in ['draft','configured','in_progress','in_review','observed','completed','published','closed','cancelled'] %}<option value="{{ code }}" {% if selected_status == code %}selected{% endif %}>{{ label }}</option>{% endif %}{% endfor %}</select></div>
+    <div class="col-lg-3 d-flex gap-2"><button class="btn btn-primary flex-fill" type="submit">{{ icon('search') }} Filtrar</button><a class="btn btn-outline-secondary" href="{{ url_for('assessments.index') }}" title="Limpiar">{{ icon('x-lg') }}</a></div>
+  </form>
+</section>
+{% if cards %}
+<div class="assessment-card-grid">
+  {% for assessment, progress in cards %}
+  <article class="assessment-card">
+    <div class="assessment-card-top">
+      <span class="status-chip status-{{ assessment.status.value }}"><i></i>{{ status_labels.get(assessment.status.value, assessment.status.value) }}</span>
+      <small>{{ assessment.questionnaire_version.version_number }}</small>
+    </div>
+    <div class="assessment-identity"><span class="entity-icon">{{ icon('clipboard-check') }}</span><div><h2>{{ assessment.name }}</h2><p>{{ assessment.organization.name }}</p></div></div>
+    <p class="assessment-description">{{ assessment.description or 'Sin descripción registrada.' }}</p>
+    <div class="assessment-progress"><div><span>Avance</span><strong>{{ progress.percentage }}%</strong></div><div class="progress"><div class="progress-bar" style="width:{{ progress.percentage }}%"></div></div></div>
+    <div class="assessment-stats"><span><b>{{ progress.counts.approved }}</b>Aprobadas</span><span><b>{{ progress.counts.submitted }}</b>En revisión</span><span><b>{{ progress.counts.observed + progress.counts.rejected }}</b>Con ajustes</span></div>
+    <footer><span>{{ icon('calendar3') }} {{ assessment.target_date.strftime('%d-%m-%Y') if assessment.target_date else 'Sin fecha objetivo' }}</span><a class="btn btn-sm btn-outline-primary" href="{{ url_for('assessments.detail', assessment_public_id=assessment.public_id) }}">Abrir {{ icon('arrow-right') }}</a></footer>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<section class="content-card"><div class="empty-state large">{{ icon('clipboard-data', 50) }}<h2>No hay assessments disponibles</h2><p>No existen resultados para los filtros aplicados o aún no tienes evaluaciones asignadas.</p></div></section>
+{% endif %}
+{% endblock %}

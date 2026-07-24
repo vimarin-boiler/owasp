@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% from 'macros/forms.html' import render_field %}
+{% from 'macros/icons.html' import icon %}
+{% block title %}{{ title }} | {{ app_name }}{% endblock %}
+{% block page_context %}Configuración del assessment{% endblock %}
+{% block content %}
+<div class="page-header"><div><span class="section-label">Fase de configuración</span><h1>{{ title }}</h1><p>Define cliente, versión inmutable del cuestionario, alcance, fechas y responsables.</p></div><a class="btn btn-outline-secondary" href="{{ url_for('assessments.index') }}">{{ icon('arrow-left') }} Volver</a></div>
+<form method="post" novalidate>
+  {{ form.hidden_tag() }}
+  <div class="row g-4">
+    <div class="col-xl-8">
+      <section class="content-card mb-4"><div class="card-heading"><div><span class="section-label">Identificación</span><h2>Información general</h2></div></div>
+        <div class="row g-3"><div class="col-md-6">{{ render_field(form.organization_id, 'form-select') }}</div><div class="col-md-6">{{ render_field(form.questionnaire_version_id, 'form-select') }}</div><div class="col-12">{{ render_field(form.name) }}</div><div class="col-12">{{ render_field(form.description) }}</div><div class="col-12">{{ render_field(form.scope) }}</div></div>
+      </section>
+      <section class="content-card"><div class="card-heading"><div><span class="section-label">Responsables</span><h2>Asignación de usuarios</h2></div></div>
+        <div class="alert alert-info border-0 small">Los usuarios solo accederán a los assessments donde estén asignados. Mantén presionada la tecla Ctrl para seleccionar varios usuarios.</div>
+        <div class="row g-3"><div class="col-md-6">{{ render_field(form.respondent_ids, 'form-select multi-select') }}</div><div class="col-md-6">{{ render_field(form.reviewer_ids, 'form-select multi-select') }}</div></div>
+      </section>
+    </div>
+    <div class="col-xl-4">
+      <section class="content-card sticky-card"><div class="card-heading"><div><span class="section-label">Planificación</span><h2>Fechas y objetivo</h2></div></div>
+        {{ render_field(form.start_date) }}{{ render_field(form.target_date) }}{{ render_field(form.target_maturity_level) }}{{ render_field(form.scoring_source, 'form-select') }}
+        <div class="security-note mb-3"><strong>Snapshot protegido</strong><span>Al guardar, las 90 preguntas y sus ponderaciones se copian al assessment para evitar cambios retroactivos.</span></div>
+        <div class="form-actions"><a class="btn btn-outline-secondary" href="{{ url_for('assessments.index') }}">Cancelar</a><button class="btn btn-primary" type="submit">{{ icon('check2') }} {{ form.submit.label.text }}</button></div>
+      </section>
+    </div>
+  </div>
+</form>
+{% endblock %}
