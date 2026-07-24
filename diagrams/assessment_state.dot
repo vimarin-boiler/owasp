@@ -1,0 +1,26 @@
+digraph AssessmentState {
+  graph [rankdir=LR, bgcolor="white", pad=0.25, nodesep=0.35, ranksep=0.45, fontname="Arial"];
+  node [shape=box, style="rounded,filled", fontname="Arial", fontsize=10, color="#0072BC", fillcolor="#F4F7FA", fontcolor="#0B1F33"];
+  edge [color="#6C757D", arrowsize=0.7, fontname="Arial", fontsize=8.5];
+  draft [label="Borrador"];
+  configured [label="Configurado"];
+  running [label="En ejecución"];
+  review [label="En revisión"];
+  observed [label="Con observaciones", fillcolor="#FFF8E1", color="#FFC107"];
+  completed [label="Completado", fillcolor="#EAF7F2", color="#198754"];
+  published [label="Publicado", fillcolor="#E8F4FB", color="#00A7E1"];
+  closed [label="Cerrado", fillcolor="#E9ECEF", color="#6C757D"];
+  cancelled [label="Cancelado", fillcolor="#FBEAEC", color="#DC3545"];
+
+  draft -> configured [label="validar configuración"];
+  configured -> running [label="iniciar"];
+  running -> review [label="enviar evaluación"];
+  review -> observed [label="existen observaciones"];
+  observed -> review [label="corregir y reenviar"];
+  review -> completed [label="todo aprobado"];
+  completed -> published [label="publicar snapshot"];
+  published -> closed [label="cerrar"];
+  completed -> review [label="reabrir antes de publicar"];
+  published -> review [label="revocar publicación + motivo", style=dashed];
+  draft -> cancelled; configured -> cancelled; running -> cancelled; review -> cancelled; observed -> cancelled;
+}

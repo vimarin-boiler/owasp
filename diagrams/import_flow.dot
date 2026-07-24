@@ -1,0 +1,28 @@
+digraph ImportFlow {
+  graph [rankdir=TB, bgcolor="white", pad=0.25, nodesep=0.35, ranksep=0.42, fontname="Arial"];
+  node [shape=box, style="rounded,filled", fontname="Arial", fontsize=9.5, color="#0072BC", fillcolor="#F4F7FA", fontcolor="#0B1F33"];
+  edge [color="#6C757D", arrowsize=0.7, fontname="Arial", fontsize=8.5];
+
+  upload [label="Carga/CLI del Excel"];
+  quarantine [label="Copia temporal privada\nSHA-256"];
+  parse [label="Parsear imp-questions\ne imp-answers"];
+  validate [label="Validar hojas, headers, IDs,\njerarquía, sets y pesos"];
+  preview [label="Preview sin escritura\naltas · coincidencias · revisiones · errores", fillcolor="#E8F4FB"];
+  confirm [shape=diamond, label="¿Confirmar?", fillcolor="#FFF8E1", color="#FFC107"];
+  hash [shape=diamond, label="¿Hash coincide?", fillcolor="#FFF8E1", color="#FFC107"];
+  tx [label="Transacción única\nupsert masters + revisions + version"];
+  audit [label="ImportJob + AuditLog"];
+  done [label="Versión draft creada", fillcolor="#EAF7F2", color="#198754"];
+  fail [label="Rollback completo\ny errores por fila", fillcolor="#FBEAEC", color="#DC3545"];
+
+  upload -> quarantine -> parse -> validate;
+  validate -> preview [label="sin errores bloqueantes"];
+  validate -> fail [label="errores"];
+  preview -> confirm;
+  confirm -> hash [label="sí"];
+  confirm -> audit [label="no / cancelar"];
+  hash -> tx [label="sí"];
+  hash -> fail [label="no"];
+  tx -> audit -> done;
+  tx -> fail [label="excepción", color="#DC3545"];
+}
