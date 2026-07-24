@@ -44,6 +44,8 @@ def create_app(config_name: str | None = None, config_overrides: dict | None = N
     Path(app.instance_path).mkdir(parents=True, exist_ok=True)
     Path(app.config["UPLOAD_FOLDER"]).mkdir(parents=True, exist_ok=True)
     Path(app.config["CATALOG_IMPORT_FOLDER"]).mkdir(parents=True, exist_ok=True)
+    Path(app.config["REPORT_FOLDER"]).mkdir(parents=True, exist_ok=True)
+    Path(app.config["BACKUP_FOLDER"]).mkdir(parents=True, exist_ok=True)
 
     if app.config.get("TRUST_PROXY_HEADERS", True):
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
@@ -66,12 +68,16 @@ def create_app(config_name: str | None = None, config_overrides: dict | None = N
     from app.assessments import bp as assessments_bp
     from app.catalog import bp as catalog_bp
     from app.dashboard import bp as dashboard_bp
+    from app.results import bp as results_bp
+    from app.reports import bp as reports_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(assessments_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(catalog_bp)
     app.register_blueprint(dashboard_bp)
+    app.register_blueprint(results_bp)
+    app.register_blueprint(reports_bp)
     app.register_blueprint(v1_bp)
 
     from app.cli import register_cli
@@ -166,4 +172,5 @@ def _register_template_context(app: Flask) -> None:
         return {
             "app_name": app.config["APP_NAME"],
             "app_version": __version__,
+            "chart_js_url": app.config["CHART_JS_URL"],
         }

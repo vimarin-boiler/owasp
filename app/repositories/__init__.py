@@ -5,6 +5,7 @@ from app.repositories.evidences import evidence_repository
 from app.repositories.organizations import organization_repository
 from app.repositories.recommendations import recommendation_repository
 from app.repositories.responses import response_repository
+from app.repositories.scoring import scoring_repository
 from app.repositories.users import user_repository
 
 __all__ = [
@@ -15,5 +16,6 @@ __all__ = [
     "organization_repository",
     "recommendation_repository",
     "response_repository",
+    "scoring_repository",
     "user_repository",
 ]

@@ -1,0 +1,51 @@
+{
+  "phase": 6,
+  "application_version": "0.6.0",
+  "generated_at": "2026-07-24T22:05:04.985378+00:00",
+  "project": "NTT DevSecOps Assessment - OWASP SAMM",
+  "source_phase": "Fase 5",
+  "source_workbook": "data/SAMM_spreadsheet.xlsx",
+  "deliverables": {
+    "web_printable_report": true,
+    "excel_report": true,
+    "pdf_report": true,
+    "backup_restore": true,
+    "docker": true,
+    "gunicorn": true,
+    "nginx": true,
+    "systemd": true,
+    "logrotate": true
+  },
+  "counts": {
+    "database_tables": 31,
+    "python_files": 113,
+    "jinja_templates": 50,
+    "javascript_files": 5,
+    "automated_tests": 62,
+    "workbook_questions": 90,
+    "workbook_answer_sets": 24,
+    "workbook_quality_criteria": 295,
+    "excel_worksheets": 11,
+    "pdf_smoke_pages": 7
+  },
+  "validation": {
+    "python_compilation": "passed",
+    "jinja_syntax": "passed",
+    "route_references": "passed",
+    "icon_references": "passed",
+    "javascript_syntax": "passed",
+    "yaml_syntax": "passed",
+    "alembic_upgrade_downgrade": "passed",
+    "workbook_parser": "passed",
+    "excel_smoke": "passed",
+    "pdf_render_and_visual_review": "passed",
+    "backup_restore_isolated": "passed",
+    "nginx_config": "passed",
+    "systemd_units": "passed",
+    "docker_image_build": "not_run_engine_unavailable",
+    "pytest": "not_run_missing_flask_runtime"
+  },
+  "integrity_file": "SHA256SUMS",
+  "file_count": 265,
+  "integrity_entries": 264
+}

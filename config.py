@@ -90,6 +90,12 @@ class BaseConfig:
     DEMO_REVIEWER_PASSWORD = os.getenv("DEMO_REVIEWER_PASSWORD", "")
 
     ASSESSMENT_AUTOSAVE_SECONDS = env_int("ASSESSMENT_AUTOSAVE_SECONDS", 30)
+    CHART_JS_URL = os.getenv("CHART_JS_URL", "https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js")
+    REPORT_FOLDER = os.getenv("REPORT_FOLDER", str(BASE_DIR / "reports"))
+    BACKUP_FOLDER = os.getenv("BACKUP_FOLDER", str(BASE_DIR / "backups"))
+    REPORT_COMPANY_NAME = os.getenv("REPORT_COMPANY_NAME", "NTT DATA")
+    REPORT_CLASSIFICATION = os.getenv("REPORT_CLASSIFICATION", "Confidencial")
+    REPORT_LOGO_PATH = os.getenv("REPORT_LOGO_PATH", "")
     RATELIMIT_STORAGE_URI = os.getenv("RATELIMIT_STORAGE_URI", "memory://")
     RATELIMIT_DEFAULT = os.getenv("RATELIMIT_DEFAULT", "200 per day;50 per hour")
 

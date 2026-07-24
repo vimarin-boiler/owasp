@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% from 'macros/icons.html' import icon %}
+{% block title %}Resultados · {{ assessment.name }} | {{ app_name }}{% endblock %}
+{% block page_context %}Resultados y brechas{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <span class="section-label">{{ assessment.organization.name }} · {{ assessment.questionnaire_version.version_number }}</span>
+    <h1>Resultados de madurez</h1>
+    <p>{{ assessment.name }} · Cálculo sobre fuente <strong>{{ result.source.value }}</strong>, escala SAMM de 0 a 3.</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-outline-secondary" href="{{ url_for('assessments.detail', assessment_public_id=assessment.public_id) }}">{{ icon('arrow-left') }} Assessment</a>
+    <a class="btn btn-outline-primary" href="{{ url_for('reports.index', assessment_public_id=assessment.public_id) }}">{{ icon('graph-up') }} Reportes</a>
+    <a class="btn btn-outline-primary" href="{{ url_for('results.recommendations', assessment_public_id=assessment.public_id) }}">{{ icon('lightbulb') }} Recomendaciones</a>
+    <a class="btn btn-primary" href="{{ url_for('results.roadmap', assessment_public_id=assessment.public_id) }}">{{ icon('signpost-split') }} Roadmap</a>
+  </div>
+</div>
+
+<div class="results-hero mb-4">
+  <div class="maturity-gauge" style="--score: {{ (result.overall_score / 3 * 100)|round(1) }}">
+    <div><strong>{{ '%.2f'|format(result.overall_score) }}</strong><span>de 3,00</span></div>
+  </div>
+  <div class="results-hero-copy">
+    <span class="section-label">Madurez general</span>
+    <h2>{{ 'Nivel objetivo %.2f'|format(result.target_score) if result.target_score is not none else 'Sin nivel objetivo definido' }}</h2>
+    <p>Brecha pendiente: <strong>{{ '%.2f'|format(result.gap) if result.gap is not none else 'N/D' }}</strong>. El resultado excluye preguntas “No aplica” y mantiene pendientes como cero.</p>
+    <div class="d-flex flex-wrap gap-2 mt-3">
+      <span class="result-chip">{{ icon('graph-up-arrow') }} Avance {{ '%.1f'|format(result.progress_percent) }}%</span>
+      <span class="result-chip">{{ icon('check-circle') }} {{ result.status_summary.statuses.approved|default(0) }} aprobadas</span>
+      <span class="result-chip">{{ icon('dash-circle') }} {{ result.status_summary.not_applicable_questions|default(0) }} no aplican</span>
+      {% if result.snapshot %}<span class="result-chip">{{ icon('camera') }} Snapshot #{{ result.snapshot.snapshot_number }}</span>{% endif %}
+    </div>
+  </div>
+  {% if can_manage %}
+  <div class="results-actions">
+    <form method="post" action="{{ url_for('results.recalculate', assessment_public_id=assessment.public_id) }}">{{ action_form.hidden_tag() }}<button class="btn btn-outline-secondary w-100" type="submit">{{ icon('arrow-clockwise') }} Recalcular</button></form>
+    {% if current_user.has_role('admin') and assessment.status.value in ['completed','published'] %}
+    <form method="post" action="{{ url_for('results.publish', assessment_public_id=assessment.public_id) }}">{{ action_form.hidden_tag() }}<button class="btn btn-primary w-100" type="submit">{{ icon('broadcast') }} {{ 'Republicar resultados' if assessment.status.value == 'published' else 'Publicar resultados' }}</button></form>
+    {% endif %}
+    <small>Fórmula {{ result.calculation_metadata.calculation_version }}</small>
+  </div>
+  {% endif %}
+</div>
+
+<div class="row g-3 mb-4">
+  {% set summary = result.status_summary %}
+  {% for value, label, note, icon_name in [
+    (summary.applicable_questions,'Aplicables','Denominador efectivo','list-check'),
+    (summary.pending_for_source,'Pendientes','Según fuente de cálculo','hourglass-split'),
+    (summary.statuses.observed|default(0),'Observadas','Requieren corrección','exclamation-circle'),
+    (summary.statuses.rejected|default(0),'Rechazadas','Revisión no aprobada','x-circle'),
+    (summary.evidences.pending|default(0),'Evidencias pendientes','Sin validación final','paperclip'),
+    (recommendations|length,'Recomendaciones','Vista rápida','lightbulb')
+  ] %}
+  <div class="col-sm-6 col-xl-2"><div class="metric-card compact"><span class="metric-icon">{{ icon(icon_name,22) }}</span><div><span>{{ label }}</span><strong>{{ value }}</strong><small>{{ note }}</small></div></div></div>
+  {% endfor %}
+</div>
+
+<div id="resultsChartData" data-chart-payload="{{ chart_payload|tojson|forceescape }}"></div>
+<div class="row g-4 mb-4">
+  <div class="col-xl-6"><section class="content-card chart-card"><div class="card-heading"><div><span class="section-label">Funciones de negocio</span><h2>Radar de madurez</h2></div></div><div class="chart-wrap radar"><canvas id="maturityRadar" aria-label="Radar de madurez por función"></canvas></div></section></div>
+  <div class="col-xl-6"><section class="content-card chart-card"><div class="card-heading"><div><span class="section-label">Prácticas</span><h2>Madurez actual versus objetivo</h2></div></div><div class="chart-wrap"><canvas id="practiceBars" aria-label="Barras de madurez por práctica"></canvas></div></section></div>
+  <div class="col-lg-6"><section class="content-card chart-card"><div class="card-heading"><div><span class="section-label">Respuestas</span><h2>Distribución de estados</h2></div></div><div class="chart-wrap compact-chart"><canvas id="responseDistribution" aria-label="Distribución de respuestas"></canvas></div></section></div>
+  <div class="col-lg-6"><section class="content-card chart-card"><div class="card-heading"><div><span class="section-label">Brecha general</span><h2>Actual versus objetivo</h2></div></div><div class="chart-wrap compact-chart"><canvas id="overallComparison" aria-label="Comparación de madurez actual y objetivo"></canvas></div></section></div>
+</div>
+
+<section class="content-card mb-4">
+  <div class="card-heading"><div><span class="section-label">Funciones</span><h2>Resultado por función de negocio</h2></div></div>
+  <div class="table-responsive"><table class="table modern-table align-middle"><thead><tr><th>Función</th><th>Actual</th><th>Objetivo</th><th>Brecha</th><th>Progreso</th><th>Pendientes</th></tr></thead><tbody>
+    {% for item in functions %}<tr><td><div class="entity-cell"><span class="entity-icon">{{ icon('pentagon') }}</span><span><strong>{{ item.name }}</strong><small>{{ item.applicable_count }} preguntas aplicables</small></span></div></td><td><strong>{{ '%.2f'|format(item.score) }}</strong></td><td>{{ '%.2f'|format(item.target_score) if item.target_score is not none else '—' }}</td><td><span class="gap-badge gap-{{ 'high' if item.gap and item.gap >= 1 else 'medium' if item.gap and item.gap >= 0.5 else 'low' }}">{{ '%.2f'|format(item.gap) if item.gap is not none else '—' }}</span></td><td><div class="score-progress"><div style="width:{{ item.normalized_percent }}%"></div></div><small>{{ '%.1f'|format(item.normalized_percent) }}%</small></td><td>{{ item.pending_count }}</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+
+<section class="content-card mb-4">
+  <div class="card-heading"><div><span class="section-label">Matriz de brechas</span><h2>Prácticas y flujos prioritarios</h2></div></div>
+  <div class="heatmap-grid">
+    {% for item in streams %}
+    {% set gap_value = item.gap if item.gap is not none else 0 %}
+    <article class="heatmap-cell heat-{{ 'critical' if gap_value >= 1.5 else 'high' if gap_value >= 1 else 'medium' if gap_value >= 0.5 else 'low' }}">
+      <span>{{ item.metadata.function_name }} / {{ item.metadata.practice_name }}</span>
+      <strong>{{ item.name }}</strong>
+      <div><b>{{ '%.2f'|format(item.score) }}</b><small>Brecha {{ '%.2f'|format(gap_value) }}</small></div>
+      {% if can_manage and gap_value > 0 %}<a href="{{ url_for('results.recommendation_create', assessment_public_id=assessment.public_id, dimension='stream|' ~ item.key) }}">Crear recomendación {{ icon('arrow-right') }}</a>{% endif %}
+    </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="content-card">
+  <div class="card-heading"><div><span class="section-label">Acciones de mejora</span><h2>Recomendaciones prioritarias</h2></div><a class="btn btn-sm btn-outline-primary" href="{{ url_for('results.recommendations', assessment_public_id=assessment.public_id) }}">Ver todas</a></div>
+  {% if recommendations %}<div class="recommendation-list compact-list">{% for item in recommendations %}<article><span class="priority-marker priority-{{ item.priority.value }}"></span><div><strong>{{ item.title }}</strong><small>{{ item.time_horizon or 'Sin horizonte' }} · {{ item.suggested_owner or 'Sin responsable' }}</small></div><span class="status-chip status-{{ item.status.value }}"><i></i>{{ item.status.value }}</span></article>{% endfor %}</div>{% else %}<div class="empty-state"><p>No existen recomendaciones registradas.</p>{% if can_manage %}<a class="btn btn-sm btn-primary" href="{{ url_for('results.recommendation_create', assessment_public_id=assessment.public_id) }}">{{ icon('plus-circle') }} Crear recomendación</a>{% endif %}</div>{% endif %}
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ chart_js_url }}" crossorigin="anonymous"></script>
+<script src="{{ url_for('static', filename='js/results-charts.js') }}"></script>
+{% endblock %}

@@ -24,6 +24,7 @@ from app.common.assessment_access import (
     can_respond,
     can_review,
     can_view_assessment,
+    can_view_results,
 )
 from app.common.errors import DomainError
 from app.common.permissions import admin_required, roles_required
@@ -268,6 +269,7 @@ def detail(assessment_public_id):
         can_respond=can_respond(current_user, assessment),
         can_review=can_review(current_user, assessment),
         can_manage=can_manage_assessment(current_user, assessment),
+        can_view_results=can_view_results(current_user, assessment),
         transition_form=EmptyActionForm(),
         note_form=ReviewNoteForm(prefix="note"),
     )

@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Reporte · {{ assessment.name }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/report-print.css') }}">
+</head>
+<body>
+  <div class="print-toolbar no-print">
+    <a class="btn btn-outline-secondary" href="{{ url_for('reports.index', assessment_public_id=assessment.public_id) }}">Volver</a>
+    <button class="btn btn-primary" type="button" data-print-page>Imprimir / guardar PDF</button>
+  </div>
+
+  <main class="report-document">
+    <section class="report-cover print-page">
+      <div class="cover-stripe"></div>
+      <div class="cover-content">
+        <span>{{ payload.branding.company_name|default('NTT DATA') }} · APPSEC / OWASP SAMM</span>
+        <h1>Reporte de madurez DevSecOps</h1>
+        <h2>{{ payload.assessment.organization }}</h2>
+        <p>{{ payload.assessment.name }}</p>
+        <div class="cover-metrics">
+          <div><small>Madurez actual</small><strong>{{ '%.2f'|format(payload.result.overall_score) }}</strong></div>
+          <div><small>Nivel objetivo</small><strong>{{ '%.2f'|format(payload.result.target_score) if payload.result.target_score is not none else 'N/D' }}</strong></div>
+          <div><small>Avance</small><strong>{{ '%.1f'|format(payload.result.progress_percent) }}%</strong></div>
+        </div>
+        <footer>Versión SAMM {{ payload.assessment.questionnaire_version }} · {{ payload.generated_at }}</footer>
+      </div>
+    </section>
+
+    <section class="report-section">
+      <h1>Resumen ejecutivo</h1>
+      <div class="summary-cards">
+        {% for label, value in [
+          ('Madurez', '%.2f'|format(payload.result.overall_score)),
+          ('Objetivo', '%.2f'|format(payload.result.target_score) if payload.result.target_score is not none else 'N/D'),
+          ('Brecha', '%.2f'|format(payload.result.gap) if payload.result.gap is not none else 'N/D'),
+          ('Avance', '%.1f%%'|format(payload.result.progress_percent)),
+          ('Aprobadas', payload.result.status_summary.statuses.approved|default(0)),
+          ('Pendientes', payload.result.status_summary.pending_for_source)
+        ] %}<div><span>{{ label }}</span><strong>{{ value }}</strong></div>{% endfor %}
+      </div>
+      <h2>Alcance</h2><p>{{ payload.assessment.scope or 'No se registró un alcance específico.' }}</p>
+      <h2>Descripción</h2><p>{{ payload.assessment.description or 'Sin descripción adicional.' }}</p>
+    </section>
+
+    <section class="report-section">
+      <h1>Resultados por función</h1>
+      <table><thead><tr><th>Función</th><th>Actual</th><th>Objetivo</th><th>Brecha</th><th>Avance</th><th>Pendientes</th></tr></thead><tbody>
+      {% for item in payload.functions %}<tr><td>{{ item.name }}</td><td>{{ '%.2f'|format(item.score) }}</td><td>{{ '%.2f'|format(item.target_score) if item.target_score is not none else 'N/D' }}</td><td>{{ '%.2f'|format(item.gap) if item.gap is not none else 'N/D' }}</td><td><div class="print-progress"><i style="width:{{ item.normalized_percent }}%"></i></div>{{ '%.1f'|format(item.normalized_percent) }}%</td><td>{{ item.pending_count }}</td></tr>{% endfor %}
+      </tbody></table>
+    </section>
+
+    <section class="report-section">
+      <h1>Resultados por práctica</h1>
+      <table><thead><tr><th>Función</th><th>Práctica</th><th>Actual</th><th>Objetivo</th><th>Brecha</th></tr></thead><tbody>
+      {% for item in payload.practices %}<tr><td>{{ item.metadata.function_name }}</td><td>{{ item.name }}</td><td>{{ '%.2f'|format(item.score) }}</td><td>{{ '%.2f'|format(item.target_score) if item.target_score is not none else 'N/D' }}</td><td>{{ '%.2f'|format(item.gap) if item.gap is not none else 'N/D' }}</td></tr>{% endfor %}
+      </tbody></table>
+    </section>
+
+    <section class="report-section">
+      <h1>Matriz de brechas</h1>
+      <table><thead><tr><th>Función</th><th>Práctica</th><th>Flujo</th><th>Actual</th><th>Objetivo</th><th>Brecha</th></tr></thead><tbody>
+      {% for item in payload.streams_by_gap %}<tr><td>{{ item.metadata.function_name }}</td><td>{{ item.metadata.practice_name }}</td><td>{{ item.name }}</td><td>{{ '%.2f'|format(item.score) }}</td><td>{{ '%.2f'|format(item.target_score) if item.target_score is not none else 'N/D' }}</td><td>{{ '%.2f'|format(item.gap) if item.gap is not none else 'N/D' }}</td></tr>{% endfor %}
+      </tbody></table>
+    </section>
+
+    <section class="report-section">
+      <h1>Recomendaciones priorizadas</h1>
+      {% if payload.recommendations %}
+      {% for item in payload.recommendations %}<article class="print-recommendation"><header><span>{{ item.priority_label }}</span><strong>{{ item.title }}</strong><em>{{ item.status_label }}</em></header><p>{{ item.description }}</p>{% if item.risk %}<p><b>Riesgo:</b> {{ item.risk }}</p>{% endif %}<dl><div><dt>Horizonte</dt><dd>{{ item.horizon }}</dd></div><div><dt>Responsable</dt><dd>{{ item.owner or 'Sin asignar' }}</dd></div><div><dt>Esfuerzo</dt><dd>{{ item.effort or 'N/D' }}</dd></div><div><dt>Quick win</dt><dd>{{ 'Sí' if item.quick_win else 'No' }}</dd></div></dl></article>{% endfor %}
+      {% else %}<p>No existen recomendaciones registradas.</p>{% endif %}
+    </section>
+
+    <section class="report-section">
+      <h1>Roadmap</h1>
+      <div class="print-roadmap">{% for group in payload.roadmap %}<div><h2>{{ group.horizon }}</h2>{% for item in group.items %}<article><span>{{ item.priority_label }}</span><strong>{{ item.title }}</strong><small>{{ item.owner or 'Sin responsable' }} · {{ item.status_label }}</small></article>{% else %}<p>Sin iniciativas.</p>{% endfor %}</div>{% endfor %}</div>
+    </section>
+
+    <section class="report-section page-break-before">
+      <h1>Evidencias</h1>
+      <table><thead><tr><th>Pregunta</th><th>Archivo</th><th>Tipo</th><th>Tamaño</th><th>Validación</th><th>Hash SHA-256</th></tr></thead><tbody>
+      {% for item in payload.evidences %}<tr><td>{{ item.question_code }}</td><td>{{ item.filename }}</td><td>{{ item.extension|upper }}</td><td>{{ '%.1f'|format(item.size_bytes / 1024) }} KB</td><td>{{ item.validation_status }}</td><td class="hash">{{ item.sha256 }}</td></tr>{% else %}<tr><td colspan="6">No existen evidencias registradas.</td></tr>{% endfor %}
+      </tbody></table>
+    </section>
+
+    <section class="report-section">
+      <h1>Preguntas observadas o rechazadas</h1>
+      <table><thead><tr><th>Pregunta</th><th>Estado</th><th>Observación</th><th>Respuesta</th></tr></thead><tbody>
+      {% for item in payload.observed_questions %}<tr><td>{{ item.code }}</td><td>{{ item.status_label }}</td><td>{{ item.reviewer_comment or '' }}</td><td>{{ item.answer or '' }}</td></tr>{% else %}<tr><td colspan="4">No existen preguntas observadas o rechazadas.</td></tr>{% endfor %}
+      </tbody></table>
+    </section>
+
+    <section class="report-section">
+      <h1>Historial de revisiones</h1>
+      <table><thead><tr><th>Pregunta</th><th>Versión</th><th>Decisión</th><th>Revisor</th><th>Fecha</th><th>Comentario</th></tr></thead><tbody>
+      {% for item in payload.reviews %}<tr><td>{{ item.question_code }}</td><td>{{ item.response_version }}</td><td>{{ item.decision }}</td><td>{{ item.reviewer }}</td><td>{{ item.reviewed_at }}</td><td>{{ item.comment }}</td></tr>{% else %}<tr><td colspan="6">No existen revisiones registradas.</td></tr>{% endfor %}
+      </tbody></table>
+    </section>
+
+    <section class="report-section">
+      <h1>Bitácora del assessment</h1>
+      <table><thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Entidad</th><th>Resultado</th></tr></thead><tbody>
+      {% for item in payload.audit_log %}<tr><td>{{ item.occurred_at }}</td><td>{{ item.actor }}</td><td>{{ item.action }}</td><td>{{ item.entity_type }}</td><td>{{ item.result }}</td></tr>{% else %}<tr><td colspan="5">No existen eventos asociados.</td></tr>{% endfor %}
+      </tbody></table>
+    </section>
+
+    <footer class="report-final">{{ payload.branding.classification|default('Confidencial') }} · Hash de cálculo {{ payload.result.input_hash }}</footer>
+  </main>
+  <script src="{{ url_for('static', filename='js/report-print.js') }}"></script>
+</body>
+</html>

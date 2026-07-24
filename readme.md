@@ -1,40 +1,37 @@
-# NTT DevSecOps Assessment — Fase 4
+# NTT DevSecOps Assessment
 
-Aplicación web segura para administrar y ejecutar assessments de madurez DevSecOps basados en OWASP SAMM.
+Plataforma web segura para administrar y ejecutar assessments de madurez DevSecOps basados en OWASP SAMM. La aplicación cubre el ciclo completo: catálogo versionado, organizaciones, assessments, respuestas, evidencias, revisión, scoring, dashboards, recomendaciones, roadmap, reportes y operación productiva.
 
-Esta entrega incorpora la **Fase 4: ejecución del assessment** sobre el catálogo versionado de la Fase 3. Permite crear assessments por organización, instanciar snapshots inmutables del cuestionario, asignar respondedores y revisores, responder preguntas, adjuntar evidencias privadas y completar el ciclo de revisión.
+**Versión de la aplicación:** 0.6.0  
+**Runtime:** Python 3.12+  
+**Backend:** Flask, SQLAlchemy y Alembic  
+**Frontend:** Jinja2, Bootstrap 5, Bootstrap Icons y Chart.js  
+**Base inicial:** SQLite, con modelos portables a PostgreSQL
 
-## Estado de la solución
+## Capacidades principales
 
-### Disponible en esta fase
-
-- Application Factory Flask y Blueprints modulares.
-- SQLAlchemy 2.x, Flask-Migrate y Alembic.
-- SQLite con diseño portable a PostgreSQL.
-- Autenticación, Argon2, cambio obligatorio de contraseña y bloqueo temporal.
+- Autenticación con Argon2, sesiones endurecidas y bloqueo temporal.
 - RBAC para administrador, respondedor y revisor.
-- Administración de usuarios, roles y organizaciones.
-- Catálogo OWASP SAMM importable y versionado.
-- Creación y edición de assessments.
-- Asignación de respondedores y revisores.
-- Snapshot histórico de preguntas, jerarquía, criterios, alternativas y ponderaciones.
-- Cuestionario navegable con filtros, búsqueda y progreso.
-- Guardado como borrador, respuesta y autosave.
-- Envío a revisión, aprobación, observación, rechazo y reapertura.
-- Observaciones generales del assessment.
-- Evidencias múltiples por pregunta con almacenamiento privado.
-- Auditoría y notificaciones internas.
-- API REST interna `/api/v1/` y especificación OpenAPI.
-- Bootstrap 5, Bootstrap Icons y Chart.js locales.
-
-### Próximas fases
-
-- Fase 5: motor de puntuación, dashboards de resultados, brechas, recomendaciones y roadmap.
-- Fase 6: reportes PDF/Excel finales, backup/restore, Docker y despliegue productivo documentado.
+- Administración de usuarios, roles, organizaciones y assessments.
+- Importación del workbook OWASP SAMM mediante `openpyxl`.
+- Catálogo jerárquico y versionamiento inmutable de preguntas.
+- Snapshot del cuestionario, alternativas y ponderaciones por assessment.
+- Cuestionario responsive con borradores, autosave y navegación jerárquica.
+- Evidencias privadas con UUID, SHA-256, validación de tipo y protección contra archivos inseguros.
+- Flujo de revisión: aprobar, observar, rechazar, corregir y reabrir.
+- Motor de madurez 0-3 por pregunta, nivel, flujo, práctica, función y assessment.
+- Snapshots reproducibles con hash de entrada y versión de fórmula.
+- Dashboards, radar, barras, distribución, matriz de brechas y comparación objetivo.
+- Recomendaciones priorizadas y roadmap por horizonte.
+- Reportes web imprimibles, Excel y PDF corporativo.
+- Backup y restore de SQLite y evidencias con hashes de integridad.
+- Docker, Gunicorn, Nginx, systemd, TLS y logrotate documentados.
+- API interna versionada bajo `/api/v1/` y OpenAPI.
+- Auditoría de las operaciones relevantes.
 
 ## Datos SAMM incluidos
 
-El workbook `data/SAMM_spreadsheet.xlsx` contiene y valida:
+`data/SAMM_spreadsheet.xlsx` contiene:
 
 | Elemento | Cantidad |
 |---|---:|
@@ -49,72 +46,83 @@ El workbook `data/SAMM_spreadsheet.xlsx` contiene y valida:
 ## Arquitectura
 
 ```text
-Navegador
-   │ HTTPS / sesión / CSRF
-   ▼
-Nginx (fase de despliegue)
-   │
-   ▼
-Gunicorn → Flask Application Factory
-             ├── auth
-             ├── admin
-             ├── catalog
-             ├── assessments
-             ├── dashboard
-             └── api/v1
-                    │
-      ┌─────────────┴─────────────┐
-      ▼                           ▼
-SQLAlchemy/Alembic         EvidenceService
-SQLite o PostgreSQL        almacenamiento privado
+Cliente web
+   |
+   | HTTPS
+   v
+Nginx
+   |
+   v
+Gunicorn -> Flask Application Factory
+             |-- auth / RBAC
+             |-- admin / organizaciones
+             |-- catalog / importación SAMM
+             |-- assessments / respuestas / evidencias
+             |-- results / scoring / roadmap
+             |-- reports / HTML / XLSX / PDF
+             |-- api/v1
+             |
+             +-- SQLAlchemy -> SQLite / PostgreSQL
+             +-- Almacenamiento privado de evidencias
+             +-- Auditoría y notificaciones
 ```
 
-La lógica funcional se divide en controladores, formularios, servicios y repositorios. Las rutas nunca consultan un assessment únicamente por UUID: también aplican validaciones de rol, asignación y ownership.
+La autorización no depende de UUID públicos. Cada acceso valida rol, asignación al assessment, organización y ownership para prevenir IDOR.
 
-## Estructura principal
+## Estructura del proyecto
 
 ```text
 samm_assessment/
-├── app/
-│   ├── admin/
-│   ├── api/v1/
-│   ├── assessments/
-│   ├── auth/
-│   ├── catalog/
-│   ├── common/
-│   ├── dashboard/
-│   ├── models/
-│   ├── repositories/
-│   ├── services/
-│   ├── static/
-│   └── templates/
-├── data/SAMM_spreadsheet.xlsx
-├── docs/
-├── migrations/versions/
-│   ├── 0001_initial.py
-│   ├── 0002_catalog_imports.py
-│   └── 0003_assessment_workflow.py
-├── tests/
-├── uploads/
-├── instance/
-├── config.py
-├── run.py
-├── requirements.txt
-└── requirements-dev.txt
+|-- app/
+|   |-- admin/
+|   |-- api/v1/
+|   |-- assessments/
+|   |-- auth/
+|   |-- catalog/
+|   |-- common/
+|   |-- dashboard/
+|   |-- models/
+|   |-- repositories/
+|   |-- reports/
+|   |-- results/
+|   |-- services/
+|   |-- static/
+|   `-- templates/
+|-- data/SAMM_spreadsheet.xlsx
+|-- deploy/
+|   |-- logrotate/
+|   |-- nginx/
+|   |-- scripts/
+|   `-- systemd/
+|-- docker/
+|-- docs/
+|-- migrations/versions/
+|-- tests/
+|-- uploads/
+|-- instance/
+|-- backups/
+|-- reports/
+|-- config.py
+|-- gunicorn.conf.py
+|-- Dockerfile
+|-- docker-compose.yml
+|-- run.py
+`-- wsgi.py
 ```
 
-El esquema de la Fase 4 contiene **31 tablas**.
+El esquema contiene 31 tablas. La Fase 6 no altera el modelo relacional; utiliza auditoría existente para registrar reportes y comandos operativos.
 
 ## Requisitos
 
 - Python 3.12 o superior.
-- SQLite 3 para desarrollo.
-- Windows, Linux o macOS.
+- SQLite 3.
+- `pip` actualizado.
+- Para producción: Linux, Nginx y systemd, o Docker Engine con Compose.
 
-## Instalación en Linux o macOS
+## Instalación local en Linux o macOS
 
 ```bash
-python3 -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 pip install -r requirements.txt
@@ -122,7 +130,7 @@ cp .env.example .env
 python scripts/generate_secret.py
 ```
 
-Copia el valor generado a `SECRET_KEY` y reemplaza todas las contraseñas de ejemplo. Luego ejecuta:
+Edite `.env`, configure un `SECRET_KEY` aleatorio y contraseñas iniciales. Después ejecute:
 
 ```bash
 flask --app run.py db upgrade
@@ -132,7 +140,7 @@ flask --app run.py run
 
 La aplicación quedará disponible en `http://127.0.0.1:5000`.
 
-## Instalación en Windows PowerShell
+## Instalación local en Windows PowerShell
 
 ```powershell
 py -3.12 -m venv .venv
@@ -151,205 +159,260 @@ flask --app run.py seed
 flask --app run.py run
 ```
 
-## Inicialización y usuarios demo
-
-`flask seed` realiza de forma idempotente:
-
-1. Creación de roles.
-2. Creación del administrador inicial.
-3. Creación de la organización demo.
-4. Importación y publicación del workbook configurado.
-5. Creación opcional de respondedor y revisor demo.
-6. Creación opcional de un assessment SAMM iniciado.
-
-La creación de datos demo está **deshabilitada por defecto en el código**. El archivo `.env.example` la habilita explícitamente con:
+## Configuración mínima
 
 ```env
-CREATE_DEMO_DATA=true
-```
-
-Para producción usa `CREATE_DEMO_DATA=false`.
-
-Todos los usuarios iniciales quedan obligados a cambiar su contraseña en el primer acceso.
-
-## Flujo administrativo
-
-1. Publicar una versión del cuestionario SAMM.
-2. Crear o seleccionar una organización.
-3. Crear un assessment.
-4. Elegir la versión publicada y el nivel objetivo.
-5. Asignar uno o más respondedores y revisores.
-6. Cambiar el estado a **En ejecución**.
-7. Supervisar avance y revisiones.
-8. Completar el assessment cuando todas las preguntas requeridas estén aprobadas.
-
-Al crear el assessment, la aplicación copia el contenido de cada pregunta a `assessment_questions`. Las modificaciones futuras del catálogo no alteran evaluaciones ya iniciadas.
-
-## Flujo del respondedor
-
-- Visualiza únicamente assessments asignados.
-- Filtra por función, práctica, flujo y estado.
-- Busca preguntas por código o texto.
-- Guarda borradores manualmente o mediante autosave.
-- Selecciona una alternativa o marca **No aplica** con justificación.
-- Adjunta múltiples evidencias.
-- Envía la respuesta a revisión.
-- Corrige respuestas observadas o rechazadas.
-
-El estado de workflow y la aplicabilidad son dimensiones independientes: una respuesta marcada como no aplicable puede estar en borrador, enviada o aprobada, conservando siempre su justificación.
-
-## Flujo del revisor
-
-- Accede solo a assessments asignados, salvo el administrador global.
-- Consulta una cola de respuestas enviadas.
-- Revisa respuesta, comentarios y evidencias.
-- Valida o rechaza cada evidencia.
-- Aprueba, observa o rechaza la respuesta.
-- Reabre respuestas previamente aprobadas.
-- Registra observaciones generales y las marca como resueltas.
-
-Cada transición genera historial de respuesta, registro de revisión, auditoría y notificaciones internas.
-
-## Evidencias
-
-Extensiones iniciales:
-
-```text
-pdf, docx, xlsx, pptx, txt, csv, png, jpg, jpeg, zip
-```
-
-Controles implementados:
-
-- 20 MB por archivo, configurable.
-- Cantidad máxima por pregunta configurable.
-- Almacenamiento fuera de `static`.
-- Directorios por UUID de assessment y pregunta.
-- Nombre interno aleatorio UUID.
-- `secure_filename` para el nombre presentado.
-- Comprobación de firma y tipo efectivo.
-- Inspección del contenido ZIP/Office.
-- Rechazo de traversal, symlinks, ejecutables, scripts y bombas ZIP.
-- Cuarentena temporal antes de mover el archivo.
-- Hash SHA-256 y prevención de duplicados.
-- Interfaz preparada para antivirus o ClamAV.
-- Autorización antes de descargar o eliminar.
-- Descarga forzada con `nosniff`, `sandbox` y `no-store`.
-
-El scanner incluido es un adaptador nulo seguro para desarrollo. En producción debe reemplazarse por una implementación antivirus real antes de aceptar archivos externos.
-
-## Configuración relevante
-
-```env
+FLASK_ENV=development
+SECRET_KEY=replace-with-at-least-32-random-bytes
 DATABASE_URL=sqlite:///instance/samm_assessment.db
+
+INITIAL_ADMIN_NAME=Administrador
+INITIAL_ADMIN_EMAIL=admin@example.com
+INITIAL_ADMIN_PASSWORD=Change-Me-Now-2026!
+
 UPLOAD_FOLDER=uploads
+BACKUP_FOLDER=backups
+REPORT_FOLDER=reports
 MAX_CONTENT_LENGTH_MB=20
 MAX_EVIDENCE_FILES_PER_QUESTION=10
-MAX_REQUEST_CONTENT_LENGTH_MB=200
 ALLOWED_EXTENSIONS=pdf,docx,xlsx,pptx,txt,csv,png,jpg,jpeg,zip
+
+SESSION_COOKIE_SECURE=false
+SESSION_COOKIE_HTTPONLY=true
+SESSION_COOKIE_SAMESITE=Lax
 ASSESSMENT_AUTOSAVE_SECONDS=30
-SAMM_IMPORT_FILE=data/SAMM_spreadsheet.xlsx
-SAMM_DEFAULT_VERSION=2.2.0
+APP_NAME=NTT DevSecOps Assessment
 ```
 
-`MAX_CONTENT_LENGTH_MB` controla cada archivo. `MAX_REQUEST_CONTENT_LENGTH_MB` limita el request HTTP completo.
+En producción:
+
+```env
+FLASK_ENV=production
+SESSION_COOKIE_SECURE=true
+FORCE_HTTPS=true
+TRUSTED_HOSTS=assessment.example.com
+CREATE_DEMO_DATA=false
+```
+
+## Inicialización
+
+`flask seed` es idempotente y realiza:
+
+1. Creación de los roles `admin`, `respondent` y `reviewer`.
+2. Creación del administrador inicial.
+3. Importación y publicación del workbook configurado, si no existe una versión.
+4. Creación opcional de usuarios y assessment demo cuando `CREATE_DEMO_DATA=true`.
+
+Las credenciales provienen de variables de entorno y obligan a cambiar la contraseña en el primer acceso.
 
 ## Importación SAMM
 
-Validar sin persistir:
+Validación sin persistir cambios:
 
 ```bash
 flask --app run.py import-samm --file data/SAMM_spreadsheet.xlsx --dry-run
 ```
 
-Importar y publicar:
+Importación como borrador:
 
 ```bash
 flask --app run.py import-samm \
   --file data/SAMM_spreadsheet.xlsx \
-  --name "OWASP SAMM 2.2.0" \
+  --version 2.2.0 \
+  --name "OWASP SAMM 2.2.0"
+```
+
+Importación y publicación:
+
+```bash
+flask --app run.py import-samm \
+  --file data/SAMM_spreadsheet.xlsx \
   --version 2.2.0 \
   --publish
 ```
 
-## Migraciones
+## Flujo funcional
+
+1. Publicar una versión del cuestionario.
+2. Crear organización y assessment.
+3. Definir alcance, fechas, nivel objetivo y fuente de scoring.
+4. Asignar respondedores y revisores.
+5. Iniciar el assessment.
+6. Responder y adjuntar evidencias.
+7. Enviar preguntas a revisión.
+8. Aprobar, observar o rechazar.
+9. Corregir y reenviar cuando corresponda.
+10. Completar y publicar resultados.
+11. Crear recomendaciones y roadmap.
+12. Generar entregables HTML, Excel o PDF.
+
+Los respondedores solo ven resultados y reportes cuando existe un snapshot publicado. Administradores y revisores asignados pueden previsualizar el cálculo vigente.
+
+## Metodología de scoring
+
+- Escala general de 0 a 3.
+- Fuente declarada: respuestas respondidas o posteriores.
+- Fuente revisada: respuestas con revisión registrada.
+- Fuente aprobada: solo respuestas aprobadas.
+- “No aplica” elegible se excluye del denominador.
+- Preguntas aplicables pendientes permanecen con valor cero.
+- Los niveles se calculan desde preguntas; los flujos se normalizan a 0-3.
+- Prácticas, funciones y resultado general usan promedios de dimensiones aplicables.
+
+Consulte `docs/SCORING_METHODOLOGY.md`.
+
+## Reportes
+
+Desde la vista de resultados se accede al centro de reportes:
+
+- **Vista web imprimible:** resumen, funciones, prácticas, brechas, recomendaciones, roadmap, evidencias y trazabilidad.
+- **Excel:** hojas de resumen, funciones, prácticas, flujos, preguntas, evidencias, recomendaciones, roadmap, revisiones, historial y bitácora.
+- **PDF:** portada, tabla de contenidos, gráficos vectoriales, resultados, matriz de brechas, recomendaciones, roadmap y anexos.
+
+Los archivos se generan en memoria y se descargan con `Cache-Control: no-store`. Cada generación queda registrada en auditoría. No se incorporan evidencias binarias al PDF; se incluyen sus metadatos y hashes.
+
+## Backup y restore
+
+Crear respaldo:
 
 ```bash
-flask --app run.py db upgrade
-flask --app run.py db current
-flask --app run.py db downgrade
+flask --app run.py backup
 ```
 
-La migración `0003_assessment_workflow` agrega las observaciones generales y comentarios de revisión de evidencia.
+Indicar nombre o ruta:
 
-## API v1
+```bash
+flask --app run.py backup --output backups/manual.zip
+```
 
-- `GET /api/v1/health`
-- `GET /api/v1/openapi.yaml`
-- `GET /api/v1/questions/`
-- `GET /api/v1/questionnaire-versions/`
-- `GET /api/v1/assessments/`
-- `GET /api/v1/assessments/{uuid}/`
-- `GET /api/v1/assessments/{uuid}/questions/`
-- `PUT /api/v1/responses/{assessment_question_uuid}/`
-- `GET /api/v1/evidences/{uuid}/`
+Validar y restaurar:
 
-La API usa la sesión autenticada de la aplicación. Los endpoints de escritura siguen protegidos por CSRF cuando se consumen desde el navegador.
+```bash
+flask --app run.py restore --file backups/manual.zip
+```
+
+Restauración no interactiva:
+
+```bash
+flask --app run.py restore --file backups/manual.zip --yes
+```
+
+El respaldo contiene:
+
+- Copia consistente de SQLite mediante la API de backup.
+- Evidencias privadas, excluyendo cuarentena.
+- `metadata.json`.
+- `manifest.json` con SHA-256 y tamaño de cada archivo.
+
+La restauración valida rutas, enlaces simbólicos, tamaño, relación de compresión, hashes y `PRAGMA integrity_check`. De forma predeterminada crea un respaldo de seguridad previo. Detalles en `docs/BACKUP_RESTORE.md`.
 
 ## Pruebas
 
 ```bash
 pip install -r requirements-dev.txt
-pytest
+python -m pytest
 ```
 
-Con cobertura:
+Análisis estático:
 
 ```bash
-pytest --cov=app --cov-report=term-missing --cov-report=html
+ruff check .
+python -m compileall app tests
 ```
 
-La suite incluye escenarios de:
-
-- Creación y snapshot de assessments.
-- Aislamiento por asignación e IDOR.
-- Guardado, envío, revisión y reapertura.
-- Evidencias, hash, duplicados y eliminación.
-- Autenticación y autorización.
-- Importación y versionamiento SAMM.
-- Migraciones.
-
-También existe un smoke test:
+## Docker
 
 ```bash
-python scripts/smoke_check.py
+cp .env.example .env
+# Configure secretos y valores de producción.
+docker compose build
+docker compose up -d
 ```
 
-## Seguridad operativa
+Abra `http://localhost:8080`.
 
-Antes de producción:
+El contenedor:
 
-- Usa `FLASK_ENV=production`.
-- Configura `SESSION_COOKIE_SECURE=true` y TLS.
-- Usa una `SECRET_KEY` aleatoria y rotada de forma controlada.
-- Configura `TRUSTED_HOSTS` con nombres reales.
-- Reemplaza el almacenamiento local si se necesita alta disponibilidad.
-- Integra ClamAV o un servicio antimalware.
-- Configura un backend compartido para rate limiting.
-- Restringe permisos del directorio `uploads` al usuario del servicio.
-- Migra a PostgreSQL para concurrencia y operación multiinstancia.
+- Se ejecuta con usuario no root UID 10001.
+- Aplica migraciones al iniciar.
+- Mantiene volúmenes separados para base, evidencias, reportes y backups.
+- Usa `no-new-privileges` y elimina capacidades innecesarias.
+- Expone healthcheck en `/api/v1/health`.
 
-## Documentación adicional
+Consulte `docs/DOCKER.md`.
 
-- `docs/PHASE_4_DELIVERY.md`
-- `docs/ASSESSMENT_WORKFLOW.md`
-- `docs/EVIDENCE_SECURITY.md`
+## Producción Linux
+
+La entrega incluye:
+
+- `gunicorn.conf.py`.
+- `deploy/nginx/samm-assessment.conf`.
+- `deploy/systemd/samm-assessment.service`.
+- Timer diario de backup.
+- Configuración logrotate.
+- Script de instalación base.
+
+Guía completa: `docs/DEPLOYMENT_LINUX.md`.
+
+## API interna
+
+- Documento OpenAPI: `/api/v1/openapi.yaml`.
+- Healthcheck: `/api/v1/health`.
+- Catálogo, assessments, respuestas, evidencias, resultados y recomendaciones.
+- Enlaces autorizados de reportes: `/api/v1/reports/{assessment_id}/`.
+
+La API usa la sesión autenticada y las mismas reglas de autorización que la interfaz.
+
+## Seguridad
+
+- Argon2 para contraseñas.
+- CSRF en formularios.
+- ORM y consultas parametrizadas.
+- Escape Jinja2.
+- Cookies `HttpOnly`, `SameSite` y `Secure` en producción.
+- Expiración absoluta e inactividad de sesión.
+- Rate limiting.
+- CSP, HSTS, protección clickjacking y MIME sniffing.
+- UUID públicos más autorización contextual.
+- Evidencias fuera de `static` y descarga autenticada.
+- Hashes SHA-256 y auditoría.
+- Secretos solo mediante variables de entorno.
+- Errores sin stack trace en producción.
+
+Revise `docs/PRODUCTION_SECURITY_CHECKLIST.md` antes de publicar el servicio.
+
+## Evolución a PostgreSQL
+
+Los modelos y servicios no dependen de SQL específico de SQLite. Para migrar:
+
+1. Instale el driver PostgreSQL, por ejemplo `psycopg[binary]`.
+2. Configure `DATABASE_URL=postgresql+psycopg://...`.
+3. Ejecute `flask db upgrade` sobre una base vacía.
+4. Migre los datos mediante una herramienta controlada.
+5. Reemplace los comandos integrados de backup/restore por mecanismos nativos de PostgreSQL.
+
+La lógica funcional y los repositorios no requieren cambios.
+
+## Credenciales de demostración
+
+Solo se crean cuando `CREATE_DEMO_DATA=true`. Los correos y contraseñas se toman de `.env`. Todas las cuentas iniciales exigen cambio de contraseña.
+
+## Limitaciones conocidas
+
+- SQLite está orientado a una única instancia de aplicación y carga moderada.
+- El adaptador antivirus por defecto no analiza malware; debe integrarse ClamAV o un servicio equivalente.
+- Los reportes PDF usan tipografías estándar. Puede incorporarse un logotipo PNG/JPEG autorizado mediante `REPORT_LOGO_PATH`; el proyecto no distribuye logotipos protegidos.
+- La generación de reportes se ejecuta en el proceso web. Para grandes volúmenes conviene migrarla a una cola asíncrona.
+- Los backups integrados son exclusivos de SQLite.
+- Chart.js se obtiene desde una URL configurable; puede servirse localmente en entornos aislados.
+
+## Documentación
+
+- `docs/PHASE_6_DELIVERY.md`
+- `docs/REPORTING.md`
+- `docs/BACKUP_RESTORE.md`
+- `docs/DOCKER.md`
+- `docs/DEPLOYMENT_LINUX.md`
+- `docs/PRODUCTION_SECURITY_CHECKLIST.md`
+- `docs/SCORING_METHODOLOGY.md`
 - `docs/openapi-v1.yaml`
-- `docs/VALIDATION_REPORT_PHASE4.md`
-- `docs/PROJECT_TREE_PHASE4.txt`
-
-## Limitaciones conocidas de esta fase
-
-- El cálculo consolidado de madurez y brechas se implementará en la Fase 5.
-- La publicación actual solo registra el estado; la visualización de resultados se habilitará con el motor de scoring.
-- El antivirus por defecto no analiza malware; solo implementa el contrato de integración.
-- Los respaldos, reportes PDF finales y artefactos de despliegue pertenecen a la Fase 6.

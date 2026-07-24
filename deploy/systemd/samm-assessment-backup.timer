@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily backup timer for NTT DevSecOps SAMM Assessment
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+Persistent=true
+RandomizedDelaySec=900
+Unit=samm-assessment-backup.service
+
+[Install]
+WantedBy=timers.target

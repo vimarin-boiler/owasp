@@ -8,3 +8,12 @@ instance/*.db
 uploads/evidence/*
 uploads/quarantine/*
 backups/*
+reports/*
+uploads/*
+!uploads/.gitkeep
+!backups/.gitkeep
+!reports/.gitkeep
+*.zip
+*.log
+SHA256SUMS
+PHASE_*_MANIFEST.json

@@ -4,20 +4,36 @@
 {% block page_context %}Resumen operativo{% endblock %}
 {% block content %}
 <div class="page-header">
-  <div><span class="section-label">Vista general</span><h1>Dashboard de madurez DevSecOps</h1><p>Supervisa evaluaciones, avance, respuestas pendientes y actividad de la plataforma OWASP SAMM.</p></div>
-  <span class="environment-badge">Fase 4 · Ejecución y revisión</span>
+  <div><span class="section-label">Vista general</span><h1>Dashboard de madurez DevSecOps</h1><p>Supervisa ejecución, revisión, evidencias, madurez y brechas de la plataforma OWASP SAMM.</p></div>
+  <span class="environment-badge">Fase 5 · Resultados y roadmap</span>
 </div>
 {% if is_admin %}
 <div class="row g-3 mb-4">
-  {% for value, label, note, icon_name in [(total_assessments,'Assessments','Total registrados','clipboard-data'),(active_assessments,'Activos','En curso o configurados','activity'),(average_progress|string + '%','Avance promedio','Sobre assessments visibles','graph-up-arrow'),(pending_review,'Pendientes de revisión','Respuestas enviadas','shield-check'),(active_organizations,'Organizaciones','Clientes habilitados','building'),(active_users,'Usuarios activos','Con acceso habilitado','people-fill')] %}
-  <div class="col-sm-6 col-xl-2"><div class="metric-card compact"><span class="metric-icon">{{ icon(icon_name,22) }}</span><div><span>{{ label }}</span><strong class="metric-text">{{ value }}</strong><small>{{ note }}</small></div></div></div>
+  {% for value, label, note, icon_name in [
+    (total_assessments,'Assessments','Total registrados','clipboard-data'),
+    (active_assessments,'Activos','En curso o configurados','activity'),
+    (completed_assessments,'Completados','Incluye publicados y cerrados','check-circle-fill'),
+    (average_progress|string + '%','Avance promedio','Sobre assessments visibles','graph-up-arrow'),
+    (pending_review,'Pendientes de revisión','Respuestas enviadas','shield-check'),
+    (evidence_pending,'Evidencias pendientes','Sin validación final','paperclip'),
+    (active_organizations,'Organizaciones','Clientes habilitados','building'),
+    (active_users,'Usuarios activos','Con acceso habilitado','people-fill')
+  ] %}
+  <div class="col-sm-6 col-xl-3"><div class="metric-card compact"><span class="metric-icon">{{ icon(icon_name,22) }}</span><div><span>{{ label }}</span><strong class="metric-text">{{ value }}</strong><small>{{ note }}</small></div></div></div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="row g-3 mb-4">
+  {% for value,label,icon_name in [(respondent_summary.assigned,'Assessments asignados','clipboard-check'),(respondent_summary.pending,'Preguntas pendientes','hourglass-split'),(respondent_summary.observed,'Observadas','exclamation-circle'),(respondent_summary.rejected,'Rechazadas','x-circle'),(respondent_summary.approved,'Aprobadas','check-circle-fill')] %}
+  <div class="col-6 col-xl"><div class="metric-card compact"><span class="metric-icon">{{ icon(icon_name) }}</span><div><span>{{ label }}</span><strong>{{ value }}</strong></div></div></div>
   {% endfor %}
 </div>
 {% endif %}
+
 <div class="row g-4 mb-4">
   <div class="col-xl-8">
     <section class="content-card h-100"><div class="card-heading"><div><span class="section-label">Ejecución</span><h2>{{ 'Assessments recientes' if is_admin else 'Mis assessments asignados' }}</h2></div><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('assessments.index') }}">Ver todos</a></div>
-      {% if assessment_cards %}<div class="dashboard-assessment-list">{% for assessment, progress in assessment_cards %}<a href="{{ url_for('assessments.detail', assessment_public_id=assessment.public_id) }}"><span class="entity-icon">{{ icon('clipboard-check') }}</span><span><strong>{{ assessment.name }}</strong><small>{{ assessment.organization.name }} · {{ assessment.status.value }}</small><span class="progress mt-2"><span class="progress-bar" style="width:{{ progress.percentage }}%"></span></span></span><b>{{ progress.percentage }}%</b>{{ icon('chevron-right') }}</a>{% endfor %}</div>{% else %}<div class="empty-state"><p>No existen assessments disponibles.</p></div>{% endif %}
+      {% if assessment_cards %}<div class="dashboard-assessment-list">{% for card in assessment_cards %}{% set assessment=card.assessment %}{% set progress=card.progress %}<a href="{{ url_for('assessments.detail', assessment_public_id=assessment.public_id) }}"><span class="entity-icon">{{ icon('clipboard-check') }}</span><span><strong>{{ assessment.name }}</strong><small>{{ assessment.organization.name }} · {{ assessment.status.value }} · vence {{ assessment.target_date.strftime('%d-%m-%Y') if assessment.target_date else 'sin fecha' }}</small><span class="progress mt-2"><span class="progress-bar" style="width:{{ progress.percentage }}%"></span></span><em>{{ card.pending }} pendientes · {{ card.observed }} observadas · {{ card.approved }} aprobadas</em></span><b>{{ progress.percentage }}%</b>{{ icon('chevron-right') }}</a>{% endfor %}</div>{% else %}<div class="empty-state"><p>No existen assessments disponibles.</p></div>{% endif %}
     </section>
   </div>
   <div class="col-xl-4"><section class="content-card h-100"><div class="card-heading"><div><span class="section-label">Accesos directos</span><h2>Operación</h2></div></div><div class="quick-actions">
@@ -27,5 +43,19 @@
     {% if is_admin %}<a href="{{ url_for('catalog.index') }}">{{ icon('diagram-3-fill') }}<span><strong>Catálogo SAMM</strong><small>{{ catalog_questions }} preguntas / {{ questionnaire_versions }} versiones</small></span>{{ icon('chevron-right') }}</a>{% endif %}
   </div></section></div>
 </div>
-{% if is_admin %}<section class="content-card"><div class="card-heading"><div><span class="section-label">Trazabilidad</span><h2>Actividad reciente</h2></div><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.audit') }}">Ver auditoría</a></div>{% if recent_activity %}<div class="activity-list">{% for event in recent_activity %}<div class="activity-item"><span class="activity-icon">{{ icon('journal-text',17) }}</span><div><strong>{{ event.action }}</strong><span>{{ event.actor.display_name if event.actor else 'Sistema' }} · {{ event.entity_type }}</span></div><time>{{ event.occurred_at.strftime('%d-%m-%Y %H:%M') }}</time></div>{% endfor %}</div>{% else %}<div class="empty-state"><p>Aún no existen eventos de auditoría.</p></div>{% endif %}</section>{% endif %}
+
+{% if is_admin %}
+<div id="dashboardChartData" data-chart-payload='{{ {"functions":{"labels":average_functions|map(attribute="name")|list,"values":average_functions|map(attribute="score")|list},"practices":{"labels":average_practices|map(attribute="name")|list,"values":average_practices|map(attribute="score")|list},"progress":{"labels":progress_distribution.keys()|list,"values":progress_distribution.values()|list}}|tojson|forceescape }}'></div>
+<div class="row g-4 mb-4">
+  <div class="col-xl-5"><section class="content-card chart-card"><div class="card-heading"><div><span class="section-label">Portafolio</span><h2>Madurez promedio por función</h2></div></div><div class="chart-wrap radar"><canvas id="dashboardFunctionRadar"></canvas></div></section></div>
+  <div class="col-xl-7"><section class="content-card chart-card"><div class="card-heading"><div><span class="section-label">Prácticas</span><h2>Resultado promedio</h2></div></div><div class="chart-wrap"><canvas id="dashboardPracticeBars"></canvas></div></section></div>
+  <div class="col-lg-5"><section class="content-card chart-card"><div class="card-heading"><div><span class="section-label">Avance</span><h2>Distribución de assessments</h2></div></div><div class="chart-wrap compact-chart"><canvas id="dashboardProgressDistribution"></canvas></div></section></div>
+  <div class="col-lg-7"><section class="content-card h-100"><div class="card-heading"><div><span class="section-label">Atención</span><h2>Próximos a vencer</h2></div></div>{% if due_soon %}<div class="due-list">{% for item in due_soon %}<a href="{{ url_for('assessments.detail', assessment_public_id=item.public_id) }}"><span>{{ icon('calendar-event') }}</span><div><strong>{{ item.name }}</strong><small>{{ item.organization.name }}</small></div><time>{{ item.target_date.strftime('%d-%m-%Y') }}</time></a>{% endfor %}</div>{% else %}<div class="empty-state"><p>No hay assessments con vencimiento en los próximos 14 días.</p></div>{% endif %}</section></div>
+</div>
+<div class="row g-4">
+  <div class="col-xl-7"><section class="content-card"><div class="card-heading"><div><span class="section-label">Brechas</span><h2>Mayores brechas del portafolio</h2></div></div>{% if largest_gaps %}<div class="gap-ranking">{% for item in largest_gaps %}<div><span>{{ loop.index }}</span><div><strong>{{ item.practice }}</strong><small>{{ item.assessment }}</small></div><b>{{ '%.2f'|format(item.gap) }}</b></div>{% endfor %}</div>{% else %}<div class="empty-state"><p>No hay brechas calculables.</p></div>{% endif %}</section></div>
+  <div class="col-xl-5"><section class="content-card"><div class="card-heading"><div><span class="section-label">Trazabilidad</span><h2>Actividad reciente</h2></div><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.audit') }}">Ver auditoría</a></div>{% if recent_activity %}<div class="activity-list">{% for event in recent_activity %}<div class="activity-item"><span class="activity-icon">{{ icon('journal-text',17) }}</span><div><strong>{{ event.action }}</strong><span>{{ event.actor.display_name if event.actor else 'Sistema' }} · {{ event.entity_type }}</span></div><time>{{ event.occurred_at.strftime('%d-%m-%Y %H:%M') }}</time></div>{% endfor %}</div>{% else %}<div class="empty-state"><p>Aún no existen eventos de auditoría.</p></div>{% endif %}</section></div>
+</div>
+{% endif %}
 {% endblock %}
+{% block scripts %}{% if is_admin %}<script src="{{ chart_js_url }}" crossorigin="anonymous"></script><script src="{{ url_for('static', filename='js/dashboard-charts.js') }}"></script>{% endif %}{% endblock %}

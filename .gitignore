@@ -20,3 +20,7 @@ backups/*
 
 instance/catalog_imports/*
 !instance/catalog_imports/.gitkeep
+reports/*
+!reports/.gitkeep
+*.restore
+*.previous

@@ -22,8 +22,9 @@ def register_security_headers(app: Flask) -> None:
                     "object-src 'none'",
                     "frame-ancestors 'none'",
                     "form-action 'self'",
-                    "script-src 'self'",
+                    "script-src 'self' https://cdn.jsdelivr.net",
                     "style-src 'self'",
+                    "style-src-attr 'unsafe-inline'",
                     "img-src 'self' data:",
                     "font-src 'none'",
                     "connect-src 'self'",
@@ -34,6 +35,6 @@ def register_security_headers(app: Flask) -> None:
             response.headers.setdefault(
                 "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
             )
-        if request.path.startswith(("/auth", "/admin", "/assessments")):
+        if request.path.startswith(("/auth", "/admin", "/assessments", "/reports")):
             response.headers.setdefault("Cache-Control", "no-store")
         return response

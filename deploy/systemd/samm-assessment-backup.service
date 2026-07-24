@@ -1,0 +1,19 @@
+[Unit]
+Description=Backup NTT DevSecOps SAMM Assessment
+After=samm-assessment.service
+
+[Service]
+Type=oneshot
+User=samm
+Group=samm
+WorkingDirectory=/opt/samm-assessment
+EnvironmentFile=/etc/samm-assessment/samm-assessment.env
+ExecStart=/opt/samm-assessment/.venv/bin/flask backup
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/samm-assessment/instance /opt/samm-assessment/uploads /opt/samm-assessment/backups

@@ -2,18 +2,18 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flask import Blueprint, abort, current_app, jsonify, request, send_file
+from flask import Blueprint, abort, current_app, jsonify, request, send_file, url_for
 from flask_login import current_user, login_required
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from app.common.assessment_access import can_respond, can_view_assessment
+from app.common.assessment_access import can_manage_results, can_respond, can_view_assessment, can_view_results
 from app.common.errors import DomainError
 from app.common.permissions import roles_required
 from app.extensions import db
 from app.models import Assessment, AssessmentQuestion
-from app.repositories import assessment_repository, catalog_repository, evidence_repository
-from app.services import assessment_service, response_service
+from app.repositories import assessment_repository, catalog_repository, evidence_repository, recommendation_repository, scoring_repository
+from app.services import assessment_service, response_service, scoring_service
 from app.version import __version__
 
 bp = Blueprint("api_v1", __name__, url_prefix="/api/v1")
@@ -249,5 +249,88 @@ def evidence_detail(evidence_public_id):
             "validation_status": evidence.validation_status.value,
             "uploaded_at": evidence.uploaded_at.isoformat(),
             "download_url": f"/assessments/evidences/{evidence.public_id}/download",
+        }
+    )
+
+
+@bp.get("/results/<uuid:assessment_public_id>/")
+@login_required
+@roles_required("admin", "reviewer", "respondent")
+def assessment_results(assessment_public_id):
+    assessment = assessment_repository.get_by_public_id(str(assessment_public_id))
+    if assessment is None:
+        abort(404)
+    if not can_view_results(current_user, assessment):
+        abort(403)
+    if can_manage_results(current_user, assessment):
+        result = scoring_service.calculate(
+            assessment,
+            persist=True,
+            actor_id=current_user.id,
+        )
+    else:
+        snapshot = scoring_repository.published(assessment.id)
+        if snapshot is None:
+            abort(404)
+        result = scoring_service.from_snapshot(snapshot)
+    return jsonify(data=result.as_dict(include_questions=False))
+
+
+@bp.get("/recommendations/")
+@login_required
+@roles_required("admin", "reviewer", "respondent")
+def recommendations():
+    assessment_public_id = request.args.get("assessment_id", "").strip()
+    if not assessment_public_id:
+        return jsonify(error={"code": "missing_parameter", "message": "assessment_id es obligatorio."}), 400
+    assessment = assessment_repository.get_by_public_id(assessment_public_id)
+    if assessment is None:
+        abort(404)
+    if not can_view_results(current_user, assessment):
+        abort(403)
+    items = recommendation_repository.for_assessment(assessment.id)
+    return jsonify(
+        data=[
+            {
+                "id": item.public_id,
+                "title": item.title,
+                "description": item.description,
+                "risk": item.risk,
+                "priority": item.priority.value,
+                "effort": item.effort,
+                "suggested_owner": item.suggested_owner,
+                "time_horizon": item.time_horizon,
+                "due_date": item.due_date.isoformat() if item.due_date else None,
+                "dependencies": item.dependencies,
+                "status": item.status.value,
+                "is_quick_win": item.is_quick_win,
+                "target_maturity_level": str(item.target_maturity_level) if item.target_maturity_level is not None else None,
+                "source_dimension_type": item.source_dimension_type,
+                "source_dimension_key": item.source_dimension_key,
+            }
+            for item in items
+        ],
+        count=len(items),
+    )
+
+
+@bp.get("/reports/<uuid:assessment_public_id>/")
+@login_required
+@roles_required("admin", "reviewer", "respondent")
+def report_links(assessment_public_id):
+    assessment = assessment_repository.get_by_public_id(str(assessment_public_id))
+    if assessment is None:
+        abort(404)
+    if not can_view_results(current_user, assessment):
+        abort(403)
+    return jsonify(
+        data={
+            "assessment_id": assessment.public_id,
+            "published_only": not can_manage_results(current_user, assessment),
+            "formats": {
+                "html": url_for("reports.printable", assessment_public_id=assessment.public_id),
+                "xlsx": url_for("reports.excel", assessment_public_id=assessment.public_id),
+                "pdf": url_for("reports.pdf", assessment_public_id=assessment.public_id),
+            },
         }
     )

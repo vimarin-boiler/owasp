@@ -1,0 +1,42 @@
+[Unit]
+Description=NTT DevSecOps SAMM Assessment
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=samm
+Group=samm
+WorkingDirectory=/opt/samm-assessment
+EnvironmentFile=/etc/samm-assessment/samm-assessment.env
+Environment=PYTHONUNBUFFERED=1
+ExecStartPre=/opt/samm-assessment/.venv/bin/flask db upgrade
+ExecStart=/opt/samm-assessment/.venv/bin/gunicorn --config /opt/samm-assessment/gunicorn.conf.py wsgi:application
+ExecReload=/bin/kill -s HUP $MAINPID
+KillSignal=SIGQUIT
+TimeoutStopSec=45
+Restart=on-failure
+RestartSec=5
+
+RuntimeDirectory=samm-assessment
+RuntimeDirectoryMode=0750
+UMask=0027
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+ReadWritePaths=/opt/samm-assessment/instance /opt/samm-assessment/uploads /opt/samm-assessment/backups /opt/samm-assessment/reports /var/log/samm-assessment
+
+StandardOutput=append:/var/log/samm-assessment/application.log
+StandardError=append:/var/log/samm-assessment/error.log
+
+[Install]
+WantedBy=multi-user.target

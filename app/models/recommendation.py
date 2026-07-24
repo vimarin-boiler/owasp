@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import Boolean, ForeignKey, Numeric, String, Text
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.enums import RecommendationPriority, RecommendationStatus
@@ -28,6 +29,8 @@ class Recommendation(BaseModel, ActorAuditMixin, SoftDeleteMixin):
     assessment_question_id: Mapped[int | None] = mapped_column(
         ForeignKey("assessment_questions.id", ondelete="SET NULL")
     )
+    source_dimension_type: Mapped[str | None] = mapped_column(String(40), index=True)
+    source_dimension_key: Mapped[str | None] = mapped_column(String(240), index=True)
     title: Mapped[str] = mapped_column(String(240), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     risk: Mapped[str | None] = mapped_column(Text)
@@ -36,14 +39,22 @@ class Recommendation(BaseModel, ActorAuditMixin, SoftDeleteMixin):
     )
     effort: Mapped[str | None] = mapped_column(String(80))
     suggested_owner: Mapped[str | None] = mapped_column(String(180))
-    time_horizon: Mapped[str | None] = mapped_column(String(80))
+    time_horizon: Mapped[str | None] = mapped_column(String(80), index=True)
+    due_date: Mapped[date | None] = mapped_column(Date)
     dependencies: Mapped[str | None] = mapped_column(Text)
     status: Mapped[RecommendationStatus] = mapped_column(
         enum_column(RecommendationStatus, "recommendation_status"),
         default=RecommendationStatus.OPEN,
         nullable=False,
+        index=True,
     )
-    is_quick_win: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_quick_win: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
     target_maturity_level: Mapped[Decimal | None] = mapped_column(Numeric(8, 4))
+    sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     assessment: Mapped["Assessment"] = relationship()
+    business_function: Mapped["BusinessFunction | None"] = relationship()
+    security_practice: Mapped["SecurityPractice | None"] = relationship()
+    practice_stream: Mapped["PracticeStream | None"] = relationship()
+    assessment_question: Mapped["AssessmentQuestion | None"] = relationship()

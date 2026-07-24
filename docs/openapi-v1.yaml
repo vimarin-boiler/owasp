@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
   title: NTT DevSecOps Assessment Internal API
-  version: 1.0.0-phase4
-  description: API interna versionada para catálogo SAMM, assessments, respuestas y evidencias.
+  version: 1.0.0-phase6
+  description: API interna versionada para catálogo SAMM, assessments, respuestas, evidencias, resultados, recomendaciones y reportes.
 servers:
   - url: /api/v1
 security:
@@ -13,7 +13,8 @@ paths:
       security: []
       summary: Estado de salud de la aplicación
       responses:
-        '200': {description: Aplicación disponible}
+        '200':
+          description: Aplicación disponible
   /questionnaire-versions/:
     get:
       summary: Lista versiones del cuestionario
@@ -49,7 +50,7 @@ paths:
         - $ref: '#/components/parameters/AssessmentId'
       responses:
         '200': {description: Assessment, asignaciones y progreso}
-        '403': {description: Usuario no asignado}
+        '403': {description: Usuario no autorizado}
   /assessments/{assessment_id}/questions/:
     get:
       summary: Preguntas instanciadas del assessment
@@ -57,7 +58,7 @@ paths:
         - $ref: '#/components/parameters/AssessmentId'
       responses:
         '200': {description: Preguntas, snapshots y respuestas}
-        '403': {description: Usuario no asignado}
+        '403': {description: Usuario no autorizado}
   /responses/{assessment_question_id}/:
     put:
       summary: Guarda borrador, respuesta o envío a revisión
@@ -87,6 +88,46 @@ paths:
       responses:
         '200': {description: Metadatos, hash y estado de validación}
         '403': {description: Acceso denegado}
+  /results/{assessment_id}/:
+    get:
+      summary: Resultado calculado o publicado del assessment
+      description: Administradores y revisores autorizados pueden previsualizar. El respondedor requiere resultados publicados.
+      parameters:
+        - $ref: '#/components/parameters/AssessmentId'
+        - in: query
+          name: include_questions
+          schema: {type: boolean, default: false}
+      responses:
+        '200':
+          description: Resultado general, resumen y dimensiones
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentResult'
+        '403': {description: Resultados no publicados o acceso denegado}
+        '404': {description: Assessment no encontrado}
+  /recommendations/:
+    get:
+      summary: Lista recomendaciones de un assessment autorizado
+      parameters:
+        - in: query
+          name: assessment_id
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        '200':
+          description: Recomendaciones activas
+        '400': {description: Falta assessment_id}
+        '403': {description: Acceso denegado}
+  /reports/{assessment_id}/:
+    get:
+      summary: Obtiene los enlaces autorizados para reportes HTML, Excel y PDF
+      parameters:
+        - $ref: '#/components/parameters/AssessmentId'
+      responses:
+        '200': {description: Formatos y rutas de descarga disponibles}
+        '403': {description: Resultados no publicados o acceso denegado}
+        '404': {description: Assessment no encontrado}
 components:
   securitySchemes:
     sessionCookie:
@@ -116,3 +157,42 @@ components:
           type: string
           enum: [autosave, save, submit]
           default: save
+    AssessmentResult:
+      type: object
+      required: [source, calculation_version, overall_score, progress_percent, status_summary, dimensions]
+      properties:
+        source:
+          type: string
+          enum: [declared, reviewed, approved]
+        calculation_version: {type: string}
+        input_hash: {type: string, minLength: 64, maxLength: 64}
+        overall_score: {type: number, minimum: 0, maximum: 3}
+        progress_percent: {type: number, minimum: 0, maximum: 100}
+        target_score: {type: [number, 'null'], minimum: 0, maximum: 3}
+        gap: {type: [number, 'null'], minimum: 0, maximum: 3}
+        status_summary: {type: object}
+        metadata: {type: object}
+        dimensions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScoreDimension'
+        snapshot:
+          type: [object, 'null']
+    ScoreDimension:
+      type: object
+      properties:
+        dimension_type:
+          type: string
+          enum: [question, level, stream, practice, function, overall]
+        key: {type: string}
+        name: {type: string}
+        parent_key: {type: [string, 'null']}
+        score: {type: number}
+        max_score: {type: number}
+        normalized_percent: {type: number}
+        target_score: {type: [number, 'null']}
+        gap: {type: [number, 'null']}
+        applicable_count: {type: integer}
+        not_applicable_count: {type: integer}
+        pending_count: {type: integer}
+        metadata: {type: object}

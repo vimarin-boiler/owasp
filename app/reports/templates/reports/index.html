@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% from 'macros/icons.html' import icon %}
+{% block title %}Reportes · {{ assessment.name }} | {{ app_name }}{% endblock %}
+{% block page_context %}Reportes y exportaciones{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <span class="section-label">{{ assessment.organization.name }} · {{ assessment.questionnaire_version.version_number }}</span>
+    <h1>Centro de reportes</h1>
+    <p>Genera entregables consistentes desde el mismo snapshot de resultados y conserva trazabilidad en auditoría.</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{{ url_for('results.overview', assessment_public_id=assessment.public_id) }}">{{ icon('arrow-left') }} Resultados</a>
+</div>
+
+<div class="report-summary-band mb-4">
+  <div><span>Madurez actual</span><strong>{{ '%.2f'|format(payload.result.overall_score) }}</strong><small>Escala 0 a 3</small></div>
+  <div><span>Nivel objetivo</span><strong>{{ '%.2f'|format(payload.result.target_score) if payload.result.target_score is not none else 'N/D' }}</strong><small>Objetivo del assessment</small></div>
+  <div><span>Brecha</span><strong>{{ '%.2f'|format(payload.result.gap) if payload.result.gap is not none else 'N/D' }}</strong><small>Diferencia pendiente</small></div>
+  <div><span>Avance</span><strong>{{ '%.1f'|format(payload.result.progress_percent) }}%</strong><small>{{ payload.result.status_summary.completed_questions }} de {{ payload.result.status_summary.total_questions }}</small></div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-4">
+    <article class="content-card report-format-card h-100">
+      <span class="report-format-icon">{{ icon('journal-text', 30) }}</span>
+      <div><span class="section-label">Vista web</span><h2>Reporte imprimible</h2></div>
+      <p>Resumen ejecutivo, resultados, matriz de brechas, recomendaciones, roadmap y anexos en una vista optimizada para impresión.</p>
+      <a class="btn btn-outline-primary mt-auto" target="_blank" rel="noopener" href="{{ url_for('reports.printable', assessment_public_id=assessment.public_id) }}">{{ icon('arrow-right') }} Abrir vista</a>
+    </article>
+  </div>
+  <div class="col-lg-4">
+    <article class="content-card report-format-card h-100">
+      <span class="report-format-icon excel">{{ icon('file-earmark-spreadsheet', 30) }}</span>
+      <div><span class="section-label">Datos estructurados</span><h2>Libro Excel</h2></div>
+      <p>Incluye resumen, funciones, prácticas, flujos, preguntas, evidencias, recomendaciones, roadmap, revisiones y bitácora.</p>
+      <a class="btn btn-outline-success mt-auto" href="{{ url_for('reports.excel', assessment_public_id=assessment.public_id) }}">{{ icon('download') }} Descargar XLSX</a>
+    </article>
+  </div>
+  <div class="col-lg-4">
+    <article class="content-card report-format-card h-100">
+      <span class="report-format-icon pdf">{{ icon('file-earmark-lock2', 30) }}</span>
+      <div><span class="section-label">Entregable ejecutivo</span><h2>Reporte PDF</h2></div>
+      <p>Documento corporativo con portada, tabla de contenidos, gráficos vectoriales, brechas, recomendaciones, roadmap y trazabilidad.</p>
+      <a class="btn btn-primary mt-auto" href="{{ url_for('reports.pdf', assessment_public_id=assessment.public_id) }}">{{ icon('download') }} Descargar PDF</a>
+    </article>
+  </div>
+</div>
+
+<section class="content-card mb-4">
+  <div class="card-heading"><div><span class="section-label">Contenido</span><h2>Cobertura del entregable</h2></div><span class="status-chip status-{{ assessment.status.value }}"><i></i>{{ assessment.status.value }}</span></div>
+  <div class="report-coverage-grid">
+    {% for title, value, icon_name in [
+      ('Funciones de negocio', payload.functions|length, 'pentagon'),
+      ('Prácticas de seguridad', payload.practices|length, 'diagram-3'),
+      ('Flujos evaluados', payload.streams|length, 'bezier2'),
+      ('Preguntas', payload.questions|length, 'list-check'),
+      ('Evidencias', payload.evidences|length, 'paperclip'),
+      ('Recomendaciones', payload.recommendations|length, 'lightbulb'),
+      ('Revisiones', payload.reviews|length, 'shield-check'),
+      ('Eventos de auditoría', payload.audit_log|length, 'journal-text')
+    ] %}
+    <div>{{ icon(icon_name, 22) }}<span>{{ title }}</span><strong>{{ value }}</strong></div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="content-card">
+  <div class="card-heading"><div><span class="section-label">Integridad</span><h2>Referencia del cálculo</h2></div></div>
+  <dl class="report-metadata">
+    <div><dt>Snapshot</dt><dd>{{ '#' ~ payload.result.snapshot_number if payload.result.snapshot_number else 'Vista previa no publicada' }}</dd></div>
+    <div><dt>Fuente</dt><dd>{{ payload.assessment.scoring_source }}</dd></div>
+    <div><dt>Versión de fórmula</dt><dd>{{ payload.result.calculation_metadata.calculation_version }}</dd></div>
+    <div><dt>Hash de entrada</dt><dd><code>{{ payload.result.input_hash }}</code></dd></div>
+    <div><dt>Generado</dt><dd>{{ payload.generated_at }}</dd></div>
+  </dl>
+</section>
+{% endblock %}

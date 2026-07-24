@@ -14,6 +14,7 @@ from app.models import Assessment, Organization, QuestionnaireVersion, Role, Use
 from app.services.auth_service import auth_service
 from app.services.samm_import_service import catalog_import_service
 from app.services.assessment_service import assessment_service
+from app.services.backup_service import BackupError, backup_service
 from app.enums import AssessmentStatus, QuestionnaireStatus, ScoringSource
 
 ROLE_SEED = (
@@ -40,6 +41,8 @@ def register_cli(app) -> None:
     app.cli.add_command(create_admin)
     app.cli.add_command(check_config)
     app.cli.add_command(import_samm)
+    app.cli.add_command(backup)
+    app.cli.add_command(restore)
 
 
 @click.command("seed")
@@ -232,6 +235,8 @@ def check_config() -> None:
     click.echo(f"Aplicación: {current_app.config['APP_NAME']}")
     click.echo(f"Base de datos: {current_app.config['SQLALCHEMY_DATABASE_URI'].split('@')[-1]}")
     click.echo(f"Uploads: {current_app.config['UPLOAD_FOLDER']}")
+    click.echo(f"Backups: {current_app.config['BACKUP_FOLDER']}")
+    click.echo(f"Reportes: {current_app.config['REPORT_FOLDER']}")
     click.echo("Configuración válida.")
 
 
@@ -284,3 +289,64 @@ def import_samm(file_path, version_name: str | None, version_number: str | None,
             "Ocurrió un error interno durante la importación. Consulta los logs de la aplicación."
         ) from exc
     click.echo(f"Versión creada: {version.version_number} ({version.status.value})")
+
+
+@click.command("backup")
+@click.option(
+    "--output",
+    type=click.Path(dir_okay=False, path_type=Path),
+    default=None,
+    help="Ruta o nombre del archivo ZIP de salida.",
+)
+@with_appcontext
+def backup(output: Path | None) -> None:
+    """Crea un respaldo consistente de SQLite y las evidencias."""
+    try:
+        path = backup_service.create(output)
+    except (BackupError, OSError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    click.echo(f"Respaldo creado: {path}")
+
+
+@click.command("restore")
+@click.option(
+    "--file",
+    "archive_file",
+    required=True,
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="Archivo ZIP generado por flask backup.",
+)
+@click.option("--yes", is_flag=True, help="Confirma la restauración sin solicitar interacción.")
+@click.option(
+    "--no-safety-backup",
+    is_flag=True,
+    help="No genera un respaldo de seguridad previo. No recomendado.",
+)
+@with_appcontext
+def restore(archive_file: Path, yes: bool, no_safety_backup: bool) -> None:
+    """Valida y restaura un respaldo de SQLite y evidencias."""
+    try:
+        inspection = backup_service.inspect(archive_file)
+    except (BackupError, OSError, ValueError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    metadata = inspection["metadata"]
+    click.echo(f"Respaldo: {archive_file}")
+    click.echo(f"Creado: {metadata.get('created_at')}")
+    click.echo(f"Versión aplicación: {metadata.get('application_version')}")
+    click.echo(f"Evidencias: {metadata.get('evidence_file_count', 0)}")
+    if not yes and not click.confirm(
+        "La operación reemplazará la base de datos y las evidencias actuales. ¿Continuar?",
+        default=False,
+    ):
+        raise click.Abort()
+    try:
+        db.session.remove()
+        result = backup_service.restore(
+            archive_file, create_safety_backup=not no_safety_backup
+        )
+    except (BackupError, OSError, ValueError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    click.echo(f"Restauración completada desde: {result['restored_from']}")
+    if result.get("safety_backup"):
+        click.echo(f"Respaldo previo: {result['safety_backup']}")
+    click.echo("Reinicia los procesos Gunicorn antes de volver a aceptar tráfico.")

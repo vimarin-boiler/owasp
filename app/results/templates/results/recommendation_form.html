@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% from 'macros/icons.html' import icon %}
+{% from 'macros/forms.html' import render_field %}
+{% block title %}{{ title }} | {{ app_name }}{% endblock %}
+{% block page_context %}Gestión de recomendaciones{% endblock %}
+{% block content %}
+<div class="page-header"><div><span class="section-label">{{ assessment.name }}</span><h1>{{ title }}</h1><p>Define una acción concreta, priorizada y trazable para cerrar una brecha de madurez.</p></div><a class="btn btn-outline-secondary" href="{{ url_for('results.recommendations', assessment_public_id=assessment.public_id) }}">{{ icon('arrow-left') }} Volver</a></div>
+<form class="content-card" method="post" novalidate>{{ form.hidden_tag() }}
+  <div class="row g-4">
+    <div class="col-lg-8"><section class="form-section"><span class="section-label">Acción</span><h2>Descripción de la mejora</h2>{{ render_field(form.dimension_ref) }}{{ render_field(form.title) }}{{ render_field(form.description) }}{{ render_field(form.risk) }}{{ render_field(form.dependencies) }}</section></div>
+    <div class="col-lg-4"><section class="form-section"><span class="section-label">Planificación</span><h2>Prioridad y ejecución</h2>{{ render_field(form.priority) }}{{ render_field(form.effort) }}{{ render_field(form.suggested_owner) }}{{ render_field(form.time_horizon) }}{{ render_field(form.due_date) }}{{ render_field(form.target_maturity_level) }}{{ render_field(form.status) }}<div class="form-check mt-3">{{ form.is_quick_win(class='form-check-input') }}{{ form.is_quick_win.label(class='form-check-label') }}</div></section></div>
+  </div>
+  <div class="form-actions"><a class="btn btn-outline-secondary" href="{{ url_for('results.recommendations', assessment_public_id=assessment.public_id) }}">Cancelar</a><button class="btn btn-primary" type="submit">{{ icon('check2-circle') }} {{ form.submit.label.text }}</button></div>
+</form>
+{% endblock %}

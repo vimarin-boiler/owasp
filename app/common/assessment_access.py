@@ -62,3 +62,20 @@ def can_delete_evidence(user: User, evidence: Evidence) -> bool:
 
 def question_belongs_to_assessment(question: AssessmentQuestion, assessment: Assessment) -> bool:
     return question.assessment_id == assessment.id
+
+
+def can_view_results(user: User, assessment: Assessment) -> bool:
+    """Reviewers/admins can preview; respondents only see published results."""
+    if not can_view_assessment(user, assessment):
+        return False
+    if user.has_role("admin") or can_review(user, assessment):
+        return True
+    return assessment.status.value in {"published", "closed"} and assessment.results_published_at is not None
+
+
+def can_manage_results(user: User, assessment: Assessment) -> bool:
+    return can_manage_assessment(user, assessment) or can_review(user, assessment)
+
+
+def can_manage_recommendations(user: User, assessment: Assessment) -> bool:
+    return can_manage_results(user, assessment)

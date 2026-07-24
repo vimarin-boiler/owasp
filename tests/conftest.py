@@ -21,6 +21,8 @@ def app(tmp_path: Path):
             "SQLALCHEMY_DATABASE_URI": f"sqlite:///{database_path}",
             "UPLOAD_FOLDER": str(upload_path),
             "CATALOG_IMPORT_FOLDER": str(tmp_path / "catalog_imports"),
+            "REPORT_FOLDER": str(tmp_path / "reports"),
+            "BACKUP_FOLDER": str(tmp_path / "backups"),
             "RATELIMIT_ENABLED": False,
             "SERVER_NAME": "localhost",
         },

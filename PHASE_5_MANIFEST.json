@@ -1,0 +1,61 @@
+{
+  "application": "NTT DevSecOps Assessment",
+  "release": "0.5.0",
+  "phase": 5,
+  "generated_at": "2026-07-24",
+  "source_workbook": {
+    "path": "data/SAMM_spreadsheet.xlsx",
+    "sha256": "c7e32c0673891d79f12596ca9ce41fa95d40e7fd8c44698333eb84d0ff6c6f2b",
+    "questions": 90,
+    "answer_sets": 24,
+    "business_functions": 5,
+    "security_practices": 15,
+    "practice_streams": 30,
+    "maturity_levels": 3
+  },
+  "database": {
+    "tables": 31,
+    "latest_migration": "0004_scoring_recommendations",
+    "portable_target": [
+      "SQLite",
+      "PostgreSQL"
+    ]
+  },
+  "phase5_capabilities": [
+    "Scoring sources: declared, reviewed, approved",
+    "Hierarchical SAMM maturity calculation 0-3",
+    "Reproducible score snapshots with SHA-256 input hash",
+    "Controlled result publication",
+    "Administrative and respondent dashboards",
+    "Gap matrix and visual charts",
+    "Recommendation management and gap generation",
+    "Roadmap by horizon, priority and status",
+    "Results and recommendations API endpoints"
+  ],
+  "validation": {
+    "python_compile": "passed",
+    "javascript_files_checked": 2,
+    "jinja_templates_checked": 48,
+    "endpoints_detected": 82,
+    "url_for_references_checked": 196,
+    "missing_route_references": 0,
+    "icons_used": 64,
+    "missing_icons": 0,
+    "migration_upgrade_tables": 31,
+    "migration_downgrade_tables": 0,
+    "automated_tests_included": 54,
+    "pytest_executed": false,
+    "pytest_reason": "Flask dependencies unavailable in the offline build environment",
+    "ruff_executed": false,
+    "ruff_reason": "ruff unavailable in the build environment"
+  },
+  "key_documents": [
+    "README.md",
+    "docs/PHASE_5_DELIVERY.md",
+    "docs/SCORING_METHODOLOGY.md",
+    "docs/DASHBOARDS_AND_ROADMAP.md",
+    "docs/VALIDATION_REPORT_PHASE5.md",
+    "docs/openapi-v1.yaml"
+  ],
+  "file_count_excluding_sha256sums": 230
+}

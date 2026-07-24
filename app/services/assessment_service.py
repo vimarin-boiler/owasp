@@ -289,8 +289,8 @@ class AssessmentService:
         assessment.status = target
         assessment.updated_by_id = actor_id
         if target == AssessmentStatus.PUBLISHED:
-            from app.models.base import utc_now
-            assessment.results_published_at = utc_now()
+            from app.services.scoring_service import scoring_service
+            return scoring_service.publish(assessment, actor_id=actor_id)
         if target == AssessmentStatus.CLOSED:
             from app.models.base import utc_now
             assessment.closed_at = utc_now()
