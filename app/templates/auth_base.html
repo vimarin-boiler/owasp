@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es" data-bs-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Acceso | {{ app_name }}{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-light.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body class="auth-body">
+  <main class="auth-shell">
+    <section class="auth-visual" aria-label="Información de la plataforma">
+      <div class="auth-visual-content">
+        <span class="auth-kicker">NTT DATA · APPSEC</span>
+        <h1>Madurez DevSecOps<br>con evidencia y trazabilidad.</h1>
+        <p>Administra assessments OWASP SAMM, valida evidencias y transforma brechas en un roadmap de mejora medible.</p>
+        <div class="auth-features">
+          <span>Assessment estructurado</span>
+          <span>Control de acceso</span>
+          <span>Auditoría integral</span>
+        </div>
+      </div>
+      <div class="technical-grid"></div>
+    </section>
+    <section class="auth-panel">
+      <div class="auth-card">
+        <div class="auth-logo"><span>NTT</span> DevSecOps Assessment</div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+          {% endfor %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+        <footer>Acceso protegido · Versión {{ app_version }}</footer>
+      </div>
+    </section>
+  </main>
+  <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
+</body>
+</html>

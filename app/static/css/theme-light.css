@@ -1,0 +1,23 @@
+:root,
+[data-bs-theme="light"] {
+  --ntt-primary: #0072bc;
+  --ntt-secondary: #00a7e1;
+  --ntt-dark: #0b1f33;
+  --ntt-dark-alt: #132b44;
+  --ntt-light: #f4f7fa;
+  --ntt-white: #ffffff;
+  --ntt-success: #198754;
+  --ntt-warning: #ffc107;
+  --ntt-danger: #dc3545;
+  --ntt-muted: #6c757d;
+  --app-bg: #f3f6f9;
+  --app-surface: #ffffff;
+  --app-border: #dde5ed;
+  --app-text: #16324a;
+  --app-text-muted: #66798c;
+  --app-shadow: 0 10px 30px rgba(11, 31, 51, 0.07);
+  --bs-primary: var(--ntt-primary);
+  --bs-primary-rgb: 0, 114, 188;
+  --bs-link-color: var(--ntt-primary);
+  --bs-link-hover-color: #005b96;
+}

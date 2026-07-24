@@ -1,0 +1,604 @@
+{
+  "sheet_map": {
+    "Attribution and License": "xl/worksheets/sheet1.xml",
+    "Getting Started": "xl/worksheets/sheet2.xml",
+    "Benchmark": "xl/worksheets/sheet3.xml",
+    "Interview": "xl/worksheets/sheet4.xml",
+    "Scorecard": "xl/worksheets/sheet5.xml",
+    "Roadmap": "xl/worksheets/sheet6.xml",
+    "Roadmap Chart": "xl/worksheets/sheet7.xml",
+    "Lookups": "xl/worksheets/sheet8.xml",
+    "imp-questions": "xl/worksheets/sheet9.xml",
+    "DV-Lists": "xl/worksheets/sheet10.xml",
+    "imp-answers": "xl/worksheets/sheet11.xml",
+    "Background Images": "xl/worksheets/sheet12.xml"
+  },
+  "question_count": 90,
+  "business_function_count": 5,
+  "security_practice_count": 15,
+  "stream_count": 30,
+  "maturity_levels": [
+    1,
+    2,
+    3
+  ],
+  "answer_set_count": 24,
+  "answer_set_usage": {
+    "0": 43,
+    "1": 7,
+    "2": 1,
+    "3": 2,
+    "4": 8,
+    "5": 2,
+    "6": 7,
+    "7": 1,
+    "8": 1,
+    "9": 1,
+    "10": 1,
+    "11": 1,
+    "12": 1,
+    "13": 1,
+    "14": 1,
+    "15": 3,
+    "16": 1,
+    "17": 1,
+    "18": 1,
+    "19": 2,
+    "20": 1,
+    "21": 1,
+    "22": 1,
+    "23": 1
+  },
+  "functions": [
+    {
+      "name": "Design",
+      "question_count": 18,
+      "practices": [
+        {
+          "name": "Secure Architecture",
+          "question_count": 6,
+          "streams": [
+            {
+              "name": "Architecture Design",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "D-SA-A-1-1",
+                "D-SA-A-2-1",
+                "D-SA-A-3-1"
+              ]
+            },
+            {
+              "name": "Technology Management",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "D-SA-B-1-1",
+                "D-SA-B-2-1",
+                "D-SA-B-3-1"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Security Requirements",
+          "question_count": 6,
+          "streams": [
+            {
+              "name": "Software Requirements",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "D-SR-A-1-1",
+                "D-SR-A-2-1",
+                "D-SR-A-3-1"
+              ]
+            },
+            {
+              "name": "Supplier Security",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "D-SR-B-1-1",
+                "D-SR-B-2-1",
+                "D-SR-B-3-1"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Threat Assessment",
+          "question_count": 6,
+          "streams": [
+            {
+              "name": "Application Risk Profile",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "D-TA-A-1-1",
+                "D-TA-A-2-1",
+                "D-TA-A-3-1"
+              ]
+            },
+            {
+              "name": "Threat Modeling",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "D-TA-B-1-1",
+                "D-TA-B-2-1",
+                "D-TA-B-3-1"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Governance",
+      "question_count": 18,
+      "practices": [
+        {
+          "name": "Education and Guidance",
+          "question_count": 6,
+          "streams": [
+            {
+              "name": "Organization and Culture",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "G-EG-B-1-1",
+                "G-EG-B-2-1",
+                "G-EG-B-3-1"
+              ]
+            },
+            {
+              "name": "Training and Awareness",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "G-EG-A-1-1",
+                "G-EG-A-2-1",
+                "G-EG-A-3-1"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Policy and Compliance",
+          "question_count": 6,
+          "streams": [
+            {
+              "name": "Compliance Management",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "G-PC-B-1-1",
+                "G-PC-B-2-1",
+                "G-PC-B-3-1"
+              ]
+            },
+            {
+              "name": "Policy and Standards",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "G-PC-A-1-1",
+                "G-PC-A-2-1",
+                "G-PC-A-3-1"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Strategy and Metrics",
+          "question_count": 6,
+          "streams": [
+            {
+              "name": "Create and Promote",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "G-SM-A-1-1",
+                "G-SM-A-2-1",
+                "G-SM-A-3-1"
+              ]
+            },
+            {
+              "name": "Measure and Improve",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "G-SM-B-1-1",
+                "G-SM-B-2-1",
+                "G-SM-B-3-1"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Implementation",
+      "question_count": 18,
+      "practices": [
+        {
+          "name": "Defect Management",
+          "question_count": 6,
+          "streams": [
+            {
+              "name": "Defect Tracking",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "I-DM-A-1-1",
+                "I-DM-A-2-1",
+                "I-DM-A-3-1"
+              ]
+            },
+            {
+              "name": "Metrics and Feedback",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "I-DM-B-1-1",
+                "I-DM-B-2-1",
+                "I-DM-B-3-1"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Secure Build",
+          "question_count": 6,
+          "streams": [
+            {
+              "name": "Build Process",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "I-SB-A-1-1",
+                "I-SB-A-2-1",
+                "I-SB-A-3-1"
+              ]
+            },
+            {
+              "name": "Software Dependencies",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "I-SB-B-1-1",
+                "I-SB-B-2-1",
+                "I-SB-B-3-1"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Secure Deployment",
+          "question_count": 6,
+          "streams": [
+            {
+              "name": "Deployment Process",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "I-SD-A-1-1",
+                "I-SD-A-2-1",
+                "I-SD-A-3-1"
+              ]
+            },
+            {
+              "name": "Secret Management",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "I-SD-B-1-1",
+                "I-SD-B-2-1",
+                "I-SD-B-3-1"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Operations",
+      "question_count": 18,
+      "practices": [
+        {
+          "name": "Environment Management",
+          "question_count": 6,
+          "streams": [
+            {
+              "name": "Configuration Hardening",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "O-EM-A-1-1",
+                "O-EM-A-2-1",
+                "O-EM-A-3-1"
+              ]
+            },
+            {
+              "name": "Patching and Updating",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "O-EM-B-1-1",
+                "O-EM-B-2-1",
+                "O-EM-B-3-1"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Incident Management",
+          "question_count": 6,
+          "streams": [
+            {
+              "name": "Incident Detection",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "O-IM-A-1-1",
+                "O-IM-A-2-1",
+                "O-IM-A-3-1"
+              ]
+            },
+            {
+              "name": "Incident Response",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "O-IM-B-1-1",
+                "O-IM-B-2-1",
+                "O-IM-B-3-1"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Operational Management",
+          "question_count": 6,
+          "streams": [
+            {
+              "name": "Data Protection",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "O-OM-A-1-1",
+                "O-OM-A-2-1",
+                "O-OM-A-3-1"
+              ]
+            },
+            {
+              "name": "System Decommissioning / Legacy Management",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "O-OM-B-1-1",
+                "O-OM-B-2-1",
+                "O-OM-B-3-1"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Verification",
+      "question_count": 18,
+      "practices": [
+        {
+          "name": "Architecture Assessment",
+          "question_count": 6,
+          "streams": [
+            {
+              "name": "Architecture Mitigation",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "V-AA-B-1-1",
+                "V-AA-B-2-1",
+                "V-AA-B-3-1"
+              ]
+            },
+            {
+              "name": "Architecture Validation",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "V-AA-A-1-1",
+                "V-AA-A-2-1",
+                "V-AA-A-3-1"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Requirements-driven Testing",
+          "question_count": 6,
+          "streams": [
+            {
+              "name": "Control Verification",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "V-RT-A-1-1",
+                "V-RT-A-2-1",
+                "V-RT-A-3-1"
+              ]
+            },
+            {
+              "name": "Misuse/Abuse Testing",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "V-RT-B-1-1",
+                "V-RT-B-2-1",
+                "V-RT-B-3-1"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Security Testing",
+          "question_count": 6,
+          "streams": [
+            {
+              "name": "Deep Understanding",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "V-ST-B-1-1",
+                "V-ST-B-2-1",
+                "V-ST-B-3-1"
+              ]
+            },
+            {
+              "name": "Scalable Baseline",
+              "question_count": 3,
+              "levels": [
+                1,
+                2,
+                3
+              ],
+              "ids": [
+                "V-ST-A-1-1",
+                "V-ST-A-2-1",
+                "V-ST-A-3-1"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "missing_required": [],
+  "duplicate_ids": [],
+  "unknown_answer_set_codes": [],
+  "unused_answer_set_codes": [],
+  "question_lengths": {
+    "max_question": 188,
+    "max_guidance": 768,
+    "avg_question": 84.77,
+    "avg_guidance": 268.69
+  }
+}

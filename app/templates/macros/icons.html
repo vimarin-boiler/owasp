@@ -1,0 +1,5 @@
+{% macro icon(name, size=18, extra_class='') -%}
+<svg class="app-icon {{ extra_class }}" width="{{ size }}" height="{{ size }}" aria-hidden="true" focusable="false">
+  <use href="{{ url_for('static', filename='vendor/bootstrap-icons/bootstrap-icons.svg') }}#{{ name }}"></use>
+</svg>
+{%- endmacro %}

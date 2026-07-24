@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% from 'macros/forms.html' import render_field, render_checkbox %}
+{% from 'macros/icons.html' import icon %}
+{% block title %}{{ title }} | {{ app_name }}{% endblock %}
+{% block page_context %}Administración de identidades{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><span class="section-label">Usuarios</span><h1>{{ title }}</h1><p>Define la identidad, los roles y las condiciones iniciales de acceso.</p></div>
+  <a class="btn btn-outline-secondary" href="{{ url_for('admin.users') }}">{{ icon('arrow-left') }} Volver</a>
+</div>
+<section class="content-card">
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="row g-3">
+      <div class="col-lg-6">{{ render_field(form.display_name) }}</div>
+      <div class="col-lg-6">{{ render_field(form.email) }}</div>
+      {% if mode == 'create' %}<div class="col-lg-6">{{ render_field(form.password) }}</div>{% endif %}
+      <div class="col-lg-6">{{ render_field(form.role_ids, 'form-select') }}</div>
+    </div>
+    <div class="form-options">
+      {{ render_checkbox(form.is_active) }}
+      {{ render_checkbox(form.must_change_password) }}
+    </div>
+    <div class="form-actions">
+      <a class="btn btn-outline-secondary" href="{{ url_for('admin.users') }}">Cancelar</a>
+      <button class="btn btn-primary" type="submit">{{ form.submit.label.text }}</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

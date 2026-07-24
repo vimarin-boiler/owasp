@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% from 'macros/icons.html' import icon %}
+{% block title %}Auditoría | {{ app_name }}{% endblock %}
+{% block page_context %}Trazabilidad y seguridad{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><span class="section-label">Seguridad</span><h1>Bitácora de auditoría</h1><p>Consulta las acciones recientes registradas por la plataforma sin exponer contraseñas, tokens ni secretos.</p></div>
+  <span class="environment-badge">Últimos 100 eventos</span>
+</div>
+<section class="content-card">
+  {% if events %}
+  <div class="table-responsive">
+    <table class="table modern-table audit-table align-middle">
+      <thead><tr><th>Fecha</th><th>Actor</th><th>Acción</th><th>Entidad</th><th>Resultado</th><th>Origen</th></tr></thead>
+      <tbody>
+      {% for event in events %}
+        <tr>
+          <td class="text-nowrap">{{ event.occurred_at.strftime('%d-%m-%Y %H:%M:%S') }}</td>
+          <td>{{ event.actor.display_name if event.actor else 'Sistema' }}</td>
+          <td><code>{{ event.action }}</code></td>
+          <td>{{ event.entity_type }}{% if event.entity_public_id %}<br><small class="text-secondary">{{ event.entity_public_id }}</small>{% endif %}</td>
+          <td><span class="badge {{ 'text-bg-success' if event.result == 'success' else 'text-bg-danger' }}">{{ event.result }}</span></td>
+          <td><small>{{ event.ip_address or 'Sin IP' }}<br>{{ event.correlation_id or 'Sin correlación' }}</small></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="empty-state large">{{ icon('journal-text', 48) }}<h2>Sin eventos</h2><p>La actividad aparecerá aquí cuando se utilice la plataforma.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

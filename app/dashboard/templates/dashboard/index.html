@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% from 'macros/icons.html' import icon %}
+{% block title %}Dashboard | {{ app_name }}{% endblock %}
+{% block page_context %}Resumen operativo{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <span class="section-label">Vista general</span>
+    <h1>Dashboard de madurez DevSecOps</h1>
+    <p>Supervisa usuarios, organizaciones y actividad de la plataforma. Los indicadores SAMM se habilitarán al incorporar el catálogo y los assessments.</p>
+  </div>
+  <span class="environment-badge">Fase 2 · Base operativa</span>
+</div>
+
+{% if is_admin %}
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="metric-card">
+      <span class="metric-icon">{{ icon('people-fill', 22) }}</span>
+      <div><span>Usuarios activos</span><strong>{{ active_users }}</strong><small>Con acceso habilitado</small></div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="metric-card">
+      <span class="metric-icon">{{ icon('building', 22) }}</span>
+      <div><span>Organizaciones</span><strong>{{ active_organizations }}</strong><small>Clientes habilitados</small></div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="metric-card muted-metric">
+      <span class="metric-icon">{{ icon('clipboard-check', 22) }}</span>
+      <div><span>Assessments activos</span><strong>0</strong><small>Disponible en Fase 4</small></div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="metric-card muted-metric">
+      <span class="metric-icon">{{ icon('graph-up-arrow', 22) }}</span>
+      <div><span>Madurez promedio</span><strong>—</strong><small>Disponible en Fase 5</small></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-xl-8">
+    <section class="content-card h-100">
+      <div class="card-heading">
+        <div><span class="section-label">Trazabilidad</span><h2>Actividad reciente</h2></div>
+        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.audit') }}">Ver auditoría</a>
+      </div>
+      {% if recent_activity %}
+        <div class="activity-list">
+          {% for event in recent_activity %}
+          <div class="activity-item">
+            <span class="activity-icon">{{ icon('journal-text', 17) }}</span>
+            <div>
+              <strong>{{ event.action }}</strong>
+              <span>{{ event.actor.display_name if event.actor else 'Sistema' }} · {{ event.entity_type }}</span>
+            </div>
+            <time datetime="{{ event.occurred_at.isoformat() }}">{{ event.occurred_at.strftime('%d-%m-%Y %H:%M') }}</time>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state"><p>Aún no existen eventos de auditoría.</p></div>
+      {% endif %}
+    </section>
+  </div>
+  <div class="col-xl-4">
+    <section class="content-card h-100">
+      <div class="card-heading"><div><span class="section-label">Accesos directos</span><h2>Administración</h2></div></div>
+      <div class="quick-actions">
+        <a href="{{ url_for('admin.user_create') }}">{{ icon('person-plus-fill') }}<span><strong>Crear usuario</strong><small>Asignar roles y acceso</small></span>{{ icon('chevron-right') }}</a>
+        <a href="{{ url_for('admin.organization_create') }}">{{ icon('building') }}<span><strong>Crear organización</strong><small>Registrar un cliente</small></span>{{ icon('chevron-right') }}</a>
+        <a href="{{ url_for('admin.audit') }}">{{ icon('shield-check') }}<span><strong>Revisar auditoría</strong><small>Consultar acciones recientes</small></span>{{ icon('chevron-right') }}</a>
+      </div>
+    </section>
+  </div>
+</div>
+{% else %}
+<section class="content-card">
+  <div class="empty-state large">
+    {{ icon('clipboard-check', 52) }}
+    <h2>No tienes assessments asignados</h2>
+    <p>Los assessments disponibles aparecerán aquí cuando un administrador los asigne.</p>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

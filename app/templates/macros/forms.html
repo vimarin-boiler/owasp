@@ -1,0 +1,16 @@
+{% macro render_field(field, class_name='form-control') -%}
+  <div class="mb-3">
+    {{ field.label(class='form-label fw-semibold') }}
+    {{ field(class=class_name + (' is-invalid' if field.errors else '')) }}
+    {% if field.description %}<div class="form-text">{{ field.description }}</div>{% endif %}
+    {% for error in field.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+  </div>
+{%- endmacro %}
+
+{% macro render_checkbox(field) -%}
+  <div class="form-check form-switch mb-3">
+    {{ field(class='form-check-input') }}
+    {{ field.label(class='form-check-label') }}
+    {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+  </div>
+{%- endmacro %}

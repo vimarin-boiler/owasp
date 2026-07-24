@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% from 'macros/icons.html' import icon %}
+{% block title %}Usuarios | {{ app_name }}{% endblock %}
+{% block page_context %}Administración de identidades{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><span class="section-label">Administración</span><h1>Usuarios y roles</h1><p>Crea cuentas, controla su estado y asigna privilegios de administrador, respondedor o revisor.</p></div>
+  <a class="btn btn-primary" href="{{ url_for('admin.user_create') }}">{{ icon('person-plus-fill') }} Nuevo usuario</a>
+</div>
+<section class="content-card">
+  <form class="filter-bar" method="get" role="search">
+    <div class="input-group">
+      <span class="input-group-text">{{ icon('search') }}</span>
+      <input class="form-control" type="search" name="q" value="{{ search }}" placeholder="Buscar por nombre o correo" aria-label="Buscar usuarios">
+      <button class="btn btn-outline-secondary" type="submit">Buscar</button>
+    </div>
+  </form>
+  {% if users %}
+  <div class="table-responsive">
+    <table class="table modern-table align-middle">
+      <thead><tr><th>Usuario</th><th>Roles</th><th>Estado</th><th>Último acceso</th><th class="text-end">Acciones</th></tr></thead>
+      <tbody>
+      {% for user in users %}
+        <tr>
+          <td><div class="entity-cell"><span class="user-avatar small">{{ user.display_name[:1]|upper }}</span><span><strong>{{ user.display_name }}</strong><small>{{ user.email }}</small></span></div></td>
+          <td>{% for role in user.roles %}<span class="badge text-bg-light border me-1">{{ role.name }}</span>{% endfor %}</td>
+          <td><span class="status-badge {{ 'active' if user.is_active else 'inactive' }}"><i></i>{{ 'Activo' if user.is_active else 'Inactivo' }}</span></td>
+          <td>{{ user.last_login_at.strftime('%d-%m-%Y %H:%M') if user.last_login_at else 'Sin acceso' }}</td>
+          <td class="text-end text-nowrap">
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.user_edit', user_public_id=user.public_id) }}" title="Editar usuario">{{ icon('pencil-square') }}</a>
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.user_reset_password', user_public_id=user.public_id) }}" title="Restablecer contraseña">{{ icon('key-fill') }}</a>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><p>No se encontraron usuarios.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

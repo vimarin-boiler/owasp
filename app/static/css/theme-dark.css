@@ -1,0 +1,8 @@
+[data-bs-theme="dark"] {
+  --app-bg: #071522;
+  --app-surface: #10263b;
+  --app-border: #284157;
+  --app-text: #edf5fb;
+  --app-text-muted: #a9bccd;
+  --app-shadow: 0 10px 30px rgba(0, 0, 0, 0.24);
+}

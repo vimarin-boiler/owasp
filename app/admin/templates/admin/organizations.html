@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% from 'macros/icons.html' import icon %}
+{% block title %}Organizaciones | {{ app_name }}{% endblock %}
+{% block page_context %}Administración de clientes{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><span class="section-label">Administración</span><h1>Organizaciones</h1><p>Administra los clientes y unidades organizacionales que serán evaluados.</p></div>
+  <a class="btn btn-primary" href="{{ url_for('admin.organization_create') }}">{{ icon('building') }} Nueva organización</a>
+</div>
+<section class="content-card">
+  <form class="filter-bar" method="get" role="search">
+    <div class="input-group">
+      <span class="input-group-text">{{ icon('search') }}</span>
+      <input class="form-control" type="search" name="q" value="{{ search }}" placeholder="Buscar organización" aria-label="Buscar organizaciones">
+      <button class="btn btn-outline-secondary" type="submit">Buscar</button>
+    </div>
+  </form>
+  {% if organizations %}
+  <div class="table-responsive">
+    <table class="table modern-table align-middle">
+      <thead><tr><th>Organización</th><th>Identificador tributario</th><th>Estado</th><th>Actualizada</th><th class="text-end">Acciones</th></tr></thead>
+      <tbody>
+      {% for organization in organizations %}
+        <tr>
+          <td><div class="entity-cell"><span class="entity-icon">{{ icon('building') }}</span><span><strong>{{ organization.name }}</strong><small>{{ organization.legal_name or organization.slug }}</small></span></div></td>
+          <td>{{ organization.tax_identifier or '—' }}</td>
+          <td><span class="status-badge {{ 'active' if organization.is_active else 'inactive' }}"><i></i>{{ 'Activa' if organization.is_active else 'Inactiva' }}</span></td>
+          <td>{{ organization.updated_at.strftime('%d-%m-%Y %H:%M') }}</td>
+          <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.organization_edit', organization_public_id=organization.public_id) }}">{{ icon('pencil-square') }} Editar</a></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="empty-state"><p>No se encontraron organizaciones.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

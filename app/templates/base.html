@@ -1,0 +1,101 @@
+{% from 'macros/icons.html' import icon %}
+<!doctype html>
+<html lang="es" data-bs-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Plataforma de assessments de madurez DevSecOps basada en OWASP SAMM">
+  <title>{% block title %}{{ app_name }}{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-light.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-dark.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="app-sidebar" id="appSidebar" aria-label="Navegación principal">
+      <a class="brand" href="{{ url_for('dashboard.index') }}">
+        <span class="brand-mark">NTT</span>
+        <span><strong>DevSecOps</strong><small>Assessment</small></span>
+      </a>
+      <nav class="sidebar-nav">
+        <span class="nav-section">Plataforma</span>
+        <a class="sidebar-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}" href="{{ url_for('dashboard.index') }}">
+          {{ icon('grid-1x2-fill') }} <span>Dashboard</span>
+        </a>
+        {% if current_user.has_role('admin') %}
+          <span class="nav-section">Administración</span>
+          <a class="sidebar-link {% if request.endpoint and request.endpoint.startswith('admin.users') or request.endpoint in ['admin.user_create','admin.user_edit','admin.user_reset_password'] %}active{% endif %}" href="{{ url_for('admin.users') }}">
+            {{ icon('people-fill') }} <span>Usuarios</span>
+          </a>
+          <a class="sidebar-link {% if request.endpoint and request.endpoint.startswith('admin.organization') %}active{% endif %}" href="{{ url_for('admin.organizations') }}">
+            {{ icon('building') }} <span>Organizaciones</span>
+          </a>
+          <a class="sidebar-link {% if request.endpoint == 'admin.audit' %}active{% endif %}" href="{{ url_for('admin.audit') }}">
+            {{ icon('journal-text') }} <span>Auditoría</span>
+          </a>
+        {% endif %}
+        <span class="nav-section">Assessment</span>
+        <span class="sidebar-link disabled" aria-disabled="true">{{ icon('clipboard-check') }} <span>Assessments <small>Fase 4</small></span></span>
+        <span class="sidebar-link disabled" aria-disabled="true">{{ icon('diagram-3-fill') }} <span>Catálogo SAMM <small>Fase 3</small></span></span>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="status-dot"></span> Plataforma disponible
+        <small>Versión {{ app_version }}</small>
+      </div>
+    </aside>
+
+    <div class="app-main">
+      <header class="app-navbar">
+        <button type="button" class="btn btn-sm btn-light sidebar-toggle" data-sidebar-toggle aria-controls="appSidebar" aria-label="Mostrar u ocultar navegación">
+          {{ icon('list', 22) }}
+        </button>
+        <div class="page-context d-none d-md-block">
+          <span class="context-eyebrow">APPSEC / OWASP SAMM</span>
+          <strong>{% block page_context %}Plataforma de evaluación{% endblock %}</strong>
+        </div>
+        <div class="navbar-actions ms-auto">
+          <div class="user-summary">
+            <span class="user-avatar">{{ current_user.display_name[:1]|upper }}</span>
+            <span class="d-none d-sm-flex flex-column">
+              <strong>{{ current_user.display_name }}</strong>
+              <small>{{ current_user.roles|map(attribute='name')|join(', ') }}</small>
+            </span>
+          </div>
+          <form method="post" action="{{ url_for('auth.logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-outline-secondary btn-sm" type="submit" title="Cerrar sesión">
+              {{ icon('box-arrow-right') }} <span class="d-none d-lg-inline">Salir</span>
+            </button>
+          </form>
+        </div>
+      </header>
+
+      <main class="app-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="toast-container position-fixed top-0 end-0 p-3">
+              {% for category, message in messages %}
+                <div class="toast show app-toast" role="alert" aria-live="assertive" aria-atomic="true" data-auto-dismiss>
+                  <div class="toast-header">
+                    <span class="toast-indicator bg-{{ category }}"></span>
+                    <strong class="me-auto">{{ 'Operación exitosa' if category == 'success' else 'Información' if category == 'info' else 'Atención' if category == 'warning' else 'Error' }}</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+                  </div>
+                  <div class="toast-body">{{ message }}</div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+  <div class="sidebar-backdrop" data-sidebar-toggle></div>
+  <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

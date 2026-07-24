@@ -1,0 +1,8 @@
+{% extends 'auth_base.html' %}
+{% block title %}Solicitud expirada | {{ app_name }}{% endblock %}
+{% block content %}
+  <div class="error-code">400</div>
+  <h2>La solicitud expiró</h2>
+  <p class="text-body-secondary">El token de seguridad no es válido o expiró. Actualiza la página antes de intentarlo nuevamente.</p>
+  <a href="{{ request.referrer or url_for('auth.login') }}" class="btn btn-primary w-100">Volver</a>
+{% endblock %}

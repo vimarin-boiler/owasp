@@ -1,0 +1,28 @@
+digraph ResponseState {
+  graph [rankdir=LR, bgcolor="white", pad=0.25, nodesep=0.35, ranksep=0.45, fontname="Arial"];
+  node [shape=box, style="rounded,filled", fontname="Arial", fontsize=10, color="#0072BC", fillcolor="#F4F7FA", fontcolor="#0B1F33"];
+  edge [color="#6C757D", arrowsize=0.7, fontname="Arial", fontsize=8.5];
+  unanswered [label="Sin responder"];
+  draft [label="Borrador"];
+  answered [label="Respondida"];
+  submitted [label="Enviada a revisión", fillcolor="#E8F4FB"];
+  observed [label="Observada", fillcolor="#FFF8E1", color="#FFC107"];
+  rejected [label="Rechazada", fillcolor="#FBEAEC", color="#DC3545"];
+  approved [label="Aprobada", fillcolor="#EAF7F2", color="#198754"];
+
+  unanswered -> draft [label="autosave"];
+  unanswered -> answered [label="guardar completa"];
+  draft -> answered [label="completar"];
+  answered -> submitted [label="enviar"];
+  submitted -> approved [label="aprobar"];
+  submitted -> observed [label="observar"];
+  submitted -> rejected [label="rechazar"];
+  observed -> draft [label="editar"];
+  rejected -> draft [label="editar"];
+  draft -> submitted [label="reenviar"];
+  approved -> draft [label="reabrir + motivo", style=dashed];
+
+  na [shape=note, label="is_not_applicable + justificación\nse mantiene separado del estado", fillcolor="#F3ECFA", color="#6F42C1"];
+  draft -> na [style=dotted, arrowhead=none];
+  answered -> na [style=dotted, arrowhead=none];
+}

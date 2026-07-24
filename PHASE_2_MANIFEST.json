@@ -1,0 +1,23 @@
+{
+  "application": "NTT DevSecOps Assessment",
+  "version": "0.2.0",
+  "phase": 2,
+  "generated_on": "2026-07-24",
+  "python_files": 67,
+  "jinja_templates": 18,
+  "pytest_modules": 9,
+  "database_tables": 29,
+  "alembic_revisions": [
+    "0001_initial"
+  ],
+  "validation": {
+    "python_compile": "passed",
+    "sqlalchemy_mappers": "passed",
+    "alembic_upgrade_downgrade": "passed",
+    "metadata_migration_diff_count": 0,
+    "jinja_parse": "passed",
+    "javascript_syntax": "passed",
+    "icon_references_missing": 0,
+    "full_pytest_execution": "not_run_missing_runtime_dependencies_in_build_environment"
+  }
+}

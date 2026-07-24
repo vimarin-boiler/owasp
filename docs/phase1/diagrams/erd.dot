@@ -1,0 +1,73 @@
+digraph ERD {
+  graph [rankdir=LR, bgcolor="white", pad=0.25, nodesep=0.25, ranksep=0.65, splines=ortho, fontname="Arial"];
+  node [shape=record, style="rounded,filled", fontname="Arial", fontsize=8.6, color="#0072BC", fillcolor="#F4F7FA", fontcolor="#0B1F33", margin="0.08,0.05"];
+  edge [color="#6C757D", arrowsize=0.55, fontname="Arial", fontsize=7.5];
+
+  subgraph cluster_identity {
+    label="Identidad y organizaciones"; color="#00A7E1"; style="rounded";
+    user [label="{User|id · public_id\lemail · password_hash\lstatus · locked_until\l}"];
+    role [label="{Role|id · code · name\l}"];
+    user_role [label="{UserRole|user_id · role_id\l}"];
+    org [label="{Organization|id · public_id\lname · slug · status\l}"];
+    membership [label="{OrganizationMembership|organization_id · user_id\lmembership_role · status\l}"];
+    user -> user_role [dir=both, arrowtail=none, arrowhead=crow];
+    role -> user_role [dir=both, arrowtail=none, arrowhead=crow];
+    user -> membership [dir=both, arrowtail=none, arrowhead=crow];
+    org -> membership [dir=both, arrowtail=none, arrowhead=crow];
+  }
+
+  subgraph cluster_catalog {
+    label="Catálogo y versionamiento"; color="#198754"; style="rounded";
+    bf [label="{BusinessFunction|code · name · sort_order\l}"];
+    sp [label="{SecurityPractice|business_function_id\lcode · name · sort_order\l}"];
+    stream [label="{PracticeStream|security_practice_id\lcode · name · sort_order\l}"];
+    level [label="{MaturityLevel|level_number · max_score\l}"];
+    aset [label="{AnswerSet|external_code · content_hash\l}"];
+    aopt [label="{AnswerOption|answer_set_id\loption_code · text · weight\l}"];
+    q [label="{Question|external_code · current_revision_id\l}"];
+    qr [label="{QuestionRevision|question_id · revision_number\lhierarchy FKs · answer_set_id\lquestion_text · content_hash\l}"];
+    crit [label="{QuestionQualityCriterion|question_revision_id\lcriterion_text · sort_order\l}"];
+    qv [label="{QuestionnaireVersion|version_number · status\lsource_file_hash · published_at\l}"];
+    qvq [label="{QuestionnaireVersionQuestion|questionnaire_version_id\lquestion_revision_id · sort_order\l}"];
+
+    bf -> sp [arrowhead=crow]; sp -> stream [arrowhead=crow];
+    aset -> aopt [arrowhead=crow]; q -> qr [arrowhead=crow];
+    bf -> qr; sp -> qr; stream -> qr; level -> qr; aset -> qr;
+    qr -> crit [arrowhead=crow]; qv -> qvq [arrowhead=crow]; qr -> qvq [arrowhead=crow];
+  }
+
+  subgraph cluster_assessment {
+    label="Assessment, respuesta y resultados"; color="#6F42C1"; style="rounded";
+    assessment [label="{Assessment|organization_id · questionnaire_version_id\lname · status · scoring_source\ltarget_date · target_maturity\l}"];
+    ass_user [label="{AssessmentUser|assessment_id · user_id\lassignment_role · is_lead\l}"];
+    ass_q [label="{AssessmentQuestion|assessment_id · source_revision_id\lquestion/options/criteria snapshots\lcurrent_status · sort_order\l}"];
+    response [label="{AssessmentResponse|assessment_question_id\lrespondent_id · option snapshot\lstatus · is_not_applicable\lresponse_version\l}"];
+    history [label="{ResponseHistory|response_id · response_version\lsnapshot_json · transition\l}"];
+    evidence [label="{Evidence|assessment_question_id · response_id\lstorage_key · mime · size · sha256\lvalidation_status\l}"];
+    review [label="{Review|response_id · response_version\lreviewer_id · decision · comment\l}"];
+    rec [label="{Recommendation|assessment_id\lscope refs · priority · effort\lhorizon · quick_win\l}"];
+    snap [label="{AssessmentScoreSnapshot|assessment_id · snapshot_number\loverall_score · progress\lcalculation_version\l}"];
+    item [label="{AssessmentScoreItem|score_snapshot_id\ldimension_type · key\lscore · target · gap\l}"];
+
+    org -> assessment;
+    qv -> assessment;
+    assessment -> ass_user [arrowhead=crow]; user -> ass_user;
+    assessment -> ass_q [arrowhead=crow]; qr -> ass_q;
+    ass_q -> response [arrowhead=none]; user -> response;
+    response -> history [arrowhead=crow];
+    ass_q -> evidence [arrowhead=crow]; response -> evidence;
+    response -> review [arrowhead=crow]; user -> review;
+    assessment -> rec [arrowhead=crow];
+    assessment -> snap [arrowhead=crow]; snap -> item [arrowhead=crow];
+  }
+
+  subgraph cluster_ops {
+    label="Operación y trazabilidad"; color="#FFC107"; style="rounded";
+    audit [label="{AuditLog|actor_user_id · action\lentity_type · entity_public_id\lbefore_json · after_json\lip · user_agent · correlation_id\l}"];
+    setting [label="{ApplicationSetting|scope · organization_id\lkey · value_json\l}"];
+    notification [label="{Notification|user_id · type · title\lbody · action_url · read_at\l}"];
+    importjob [label="{ImportJob|source_sha256 · status\lpreview_json · errors_json\lcreated_version_id\l}"];
+    user -> audit; org -> audit; assessment -> audit;
+    org -> setting; user -> notification; qv -> importjob;
+  }
+}

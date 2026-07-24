@@ -1,0 +1,10 @@
+.venv
+.git
+.env
+__pycache__
+.pytest_cache
+.coverage
+instance/*.db
+uploads/evidence/*
+uploads/quarantine/*
+backups/*

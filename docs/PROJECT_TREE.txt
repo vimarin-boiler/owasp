@@ -1,0 +1,191 @@
+samm_assessment/
+├── app/
+│   ├── admin/
+│   │   ├── templates/
+│   │   │   └── admin/
+│   │   │       ├── audit.html
+│   │   │       ├── organization_form.html
+│   │   │       ├── organizations.html
+│   │   │       ├── reset_password.html
+│   │   │       ├── user_form.html
+│   │   │       └── users.html
+│   │   ├── __init__.py
+│   │   ├── forms.py
+│   │   └── routes.py
+│   ├── api/
+│   │   ├── v1/
+│   │   │   ├── __init__.py
+│   │   │   └── routes.py
+│   │   └── __init__.py
+│   ├── auth/
+│   │   ├── templates/
+│   │   │   └── auth/
+│   │   │       ├── change_password.html
+│   │   │       └── login.html
+│   │   ├── __init__.py
+│   │   ├── forms.py
+│   │   └── routes.py
+│   ├── common/
+│   │   ├── __init__.py
+│   │   ├── decorators.py
+│   │   ├── errors.py
+│   │   ├── logging.py
+│   │   ├── pagination.py
+│   │   ├── permissions.py
+│   │   ├── security_headers.py
+│   │   └── validators.py
+│   ├── dashboard/
+│   │   ├── templates/
+│   │   │   └── dashboard/
+│   │   │       └── index.html
+│   │   ├── __init__.py
+│   │   └── routes.py
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── assessment.py
+│   │   ├── audit.py
+│   │   ├── base.py
+│   │   ├── catalog.py
+│   │   ├── evidence.py
+│   │   ├── identity.py
+│   │   ├── organization.py
+│   │   ├── recommendation.py
+│   │   ├── response.py
+│   │   └── scoring.py
+│   ├── repositories/
+│   │   ├── __init__.py
+│   │   ├── assessments.py
+│   │   ├── audit.py
+│   │   ├── base.py
+│   │   ├── catalog.py
+│   │   ├── evidences.py
+│   │   ├── organizations.py
+│   │   ├── recommendations.py
+│   │   ├── responses.py
+│   │   └── users.py
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── audit_service.py
+│   │   ├── auth_service.py
+│   │   ├── organization_service.py
+│   │   └── user_service.py
+│   ├── static/
+│   │   ├── css/
+│   │   │   ├── app.css
+│   │   │   ├── theme-dark.css
+│   │   │   └── theme-light.css
+│   │   ├── icons/
+│   │   ├── img/
+│   │   │   └── .gitkeep
+│   │   ├── js/
+│   │   │   └── app.js
+│   │   └── vendor/
+│   │       ├── bootstrap/
+│   │       │   ├── bootstrap.bundle.min.js
+│   │       │   └── bootstrap.min.css
+│   │       └── bootstrap-icons/
+│   │           └── bootstrap-icons.svg
+│   ├── templates/
+│   │   ├── components/
+│   │   ├── errors/
+│   │   │   ├── 400.html
+│   │   │   ├── 403.html
+│   │   │   ├── 404.html
+│   │   │   ├── 500.html
+│   │   │   └── csrf.html
+│   │   ├── macros/
+│   │   │   ├── forms.html
+│   │   │   └── icons.html
+│   │   ├── auth_base.html
+│   │   └── base.html
+│   ├── __init__.py
+│   ├── cli.py
+│   ├── enums.py
+│   ├── extensions.py
+│   └── version.py
+├── backups/
+│   └── .gitkeep
+├── deploy/
+│   ├── nginx/
+│   └── systemd/
+├── docs/
+│   ├── phase1/
+│   │   ├── data/
+│   │   │   └── source_excel_analysis.json
+│   │   ├── diagrams/
+│   │   │   ├── architecture.dot
+│   │   │   ├── architecture.png
+│   │   │   ├── architecture.svg
+│   │   │   ├── assessment_state.dot
+│   │   │   ├── assessment_state.png
+│   │   │   ├── assessment_state.svg
+│   │   │   ├── erd.dot
+│   │   │   ├── erd.png
+│   │   │   ├── erd.svg
+│   │   │   ├── import_flow.dot
+│   │   │   ├── import_flow.png
+│   │   │   ├── import_flow.svg
+│   │   │   ├── response_state.dot
+│   │   │   ├── response_state.png
+│   │   │   └── response_state.svg
+│   │   └── docs/
+│   │       ├── 01_ARCHITECTURE.md
+│   │       ├── 02_DATA_MODEL.md
+│   │       ├── 03_FUNCTIONAL_FLOWS.md
+│   │       ├── 04_SCORING.md
+│   │       ├── 05_PROJECT_STRUCTURE.md
+│   │       ├── 06_SECURITY_DESIGN.md
+│   │       ├── 07_DECISIONS.md
+│   │       ├── 08_RISKS_ASSUMPTIONS.md
+│   │       ├── 09_EXCEL_SOURCE_ANALYSIS.md
+│   │       ├── 10_IMPLEMENTATION_PLAN.md
+│   │       └── PHASE_1_DESIGN.md
+│   ├── DATA_MODEL_PHASE2.md
+│   ├── PHASE_2_DELIVERY.md
+│   ├── PROJECT_TREE.txt
+│   ├── SECURITY_BASELINE.md
+│   └── VALIDATION_REPORT.md
+├── instance/
+│   └── .gitkeep
+├── migrations/
+│   ├── versions/
+│   │   └── 0001_initial.py
+│   ├── env.py
+│   ├── README
+│   └── script.py.mako
+├── scripts/
+│   ├── generate_secret.py
+│   └── smoke_check.py
+├── tests/
+│   ├── integration/
+│   ├── security/
+│   ├── unit/
+│   ├── conftest.py
+│   ├── test_audit.py
+│   ├── test_authentication.py
+│   ├── test_authorization.py
+│   ├── test_health_and_headers.py
+│   ├── test_migration.py
+│   ├── test_models.py
+│   ├── test_organization_service.py
+│   ├── test_user_service.py
+│   └── test_validators.py
+├── uploads/
+│   ├── evidence/
+│   │   └── .gitkeep
+│   └── quarantine/
+│       └── .gitkeep
+├── .dockerignore
+├── .env.example
+├── .gitignore
+├── alembic.ini
+├── CHANGELOG.md
+├── config.py
+├── LICENSES.md
+├── pyproject.toml
+├── pytest.ini
+├── README.md
+├── requirements-dev.txt
+├── requirements.txt
+├── run.py
+└── wsgi.py

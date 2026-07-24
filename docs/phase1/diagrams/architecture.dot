@@ -1,0 +1,41 @@
+digraph Architecture {
+  graph [rankdir=TB, bgcolor="white", pad=0.3, nodesep=0.35, ranksep=0.55, fontname="Arial"];
+  node [shape=box, style="rounded,filled", fontname="Arial", fontsize=10, color="#0072BC", fillcolor="#F4F7FA", fontcolor="#0B1F33", margin="0.14,0.09"];
+  edge [color="#6C757D", arrowsize=0.7, fontname="Arial", fontsize=9];
+
+  user [label="Usuarios\nAdmin · Respondedor · Revisor", fillcolor="#E8F4FB"];
+  nginx [label="Nginx\nTLS · reverse proxy · headers", fillcolor="#132B44", fontcolor="white"];
+  gunicorn [label="Gunicorn\nWSGI workers", fillcolor="#0B1F33", fontcolor="white"];
+
+  subgraph cluster_app {
+    label="Aplicación Flask modular";
+    color="#00A7E1";
+    style="rounded";
+    fontname="Arial";
+    fontcolor="#0B1F33";
+
+    presentation [label="Presentación\nBlueprints · Jinja2 · Flask-WTF · API v1"];
+    services [label="Servicios de aplicación\nCasos de uso · transacciones · permisos"];
+    domain [label="Dominio\nEstados · scoring · versionamiento · políticas"];
+    repositories [label="Repositorios\nConsultas scoped · SQLAlchemy"];
+    infra [label="Infraestructura\nExcel · PDF · storage · antivirus · backup"];
+    audit [label="Auditoría y notificaciones\nEventos estructurados · correlation ID"];
+
+    presentation -> services;
+    services -> domain;
+    services -> repositories;
+    services -> infra;
+    services -> audit;
+  }
+
+  db [label="Base de datos\nSQLite inicial / PostgreSQL futuro", shape=cylinder, fillcolor="#EAF7F2", color="#198754"];
+  files [label="Storage privado\nquarantine / evidence", shape=folder, fillcolor="#FFF8E1", color="#FFC107"];
+  reports [label="Reportes\nHTML · Excel · PDF", shape=note, fillcolor="#F3ECFA", color="#6F42C1"];
+
+  user -> nginx [label="HTTPS"];
+  nginx -> gunicorn;
+  gunicorn -> presentation;
+  repositories -> db;
+  infra -> files;
+  infra -> reports;
+}

@@ -1,0 +1,8 @@
+{% extends 'auth_base.html' %}
+{% block title %}Error 400 | {{ app_name }}{% endblock %}
+{% block content %}
+  <div class="error-code">400</div>
+  <h2>Solicitud invalida</h2>
+  <p class="text-body-secondary">No fue posible completar la solicitud. Regresa a la plataforma y vuelve a intentarlo.</p>
+  <a href="{{ url_for('dashboard.index') if current_user.is_authenticated else url_for('auth.login') }}" class="btn btn-primary w-100">Volver</a>
+{% endblock %}

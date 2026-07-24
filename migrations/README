@@ -1,0 +1,9 @@
+Migraciones Alembic administradas por Flask-Migrate.
+
+Aplicar migraciones:
+    flask --app run.py db upgrade
+
+Crear una nueva migración:
+    flask --app run.py db migrate -m "descripcion"
+
+Revisar siempre el archivo generado antes de aplicarlo.
