@@ -1,7 +1,7 @@
 {
   "phase": 6,
-  "application_version": "0.6.0",
-  "generated_at": "2026-07-24T22:05:04.985378+00:00",
+  "application_version": "0.6.5",
+  "generated_at": "2026-07-24T22:52:37.675126+00:00",
   "project": "NTT DevSecOps Assessment - OWASP SAMM",
   "source_phase": "Fase 5",
   "source_workbook": "data/SAMM_spreadsheet.xlsx",
@@ -18,10 +18,10 @@
   },
   "counts": {
     "database_tables": 31,
-    "python_files": 113,
+    "python_files": 117,
     "jinja_templates": 50,
     "javascript_files": 5,
-    "automated_tests": 62,
+    "automated_tests": 71,
     "workbook_questions": 90,
     "workbook_answer_sets": 24,
     "workbook_quality_criteria": 295,
@@ -43,9 +43,26 @@
     "nginx_config": "passed",
     "systemd_units": "passed",
     "docker_image_build": "not_run_engine_unavailable",
-    "pytest": "not_run_missing_flask_runtime"
+    "pytest": "not_run_missing_flask_runtime",
+    "assessment_snapshot_fix": "static_validation_passed"
   },
   "integrity_file": "SHA256SUMS",
-  "file_count": 265,
-  "integrity_entries": 264
+  "file_count": 380,
+  "integrity_entries": 379,
+  "hotfix": {
+    "id": "0.6.5-assessment-snapshot-autoflush",
+    "description": "Prevent double relationship attachment and eager-load the source Question before assessment snapshot creation.",
+    "regression_test": "tests/test_phase4_workflow.py::test_snapshot_builder_does_not_double_attach_and_catalog_question_is_eager_loaded"
+  },
+  "hotfixes": [
+    {
+      "id": "0.6.4-alembic-configure-args",
+      "description": "Remove duplicate compare_type and render_as_batch keyword arguments from migrations/env.py online configuration."
+    },
+    {
+      "id": "0.6.5-assessment-snapshot-autoflush",
+      "description": "Prevent double relationship attachment and eager-load the source Question before assessment snapshot creation.",
+      "regression_test": "tests/test_phase4_workflow.py::test_snapshot_builder_does_not_double_attach_and_catalog_question_is_eager_loaded"
+    }
+  ]
 }

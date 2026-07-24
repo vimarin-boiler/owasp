@@ -4,6 +4,7 @@ from decimal import Decimal
 from io import BytesIO
 
 import pytest
+from sqlalchemy import inspect as sa_inspect
 from werkzeug.datastructures import FileStorage
 
 from app.common.assessment_access import can_respond, can_review, can_view_assessment
@@ -119,6 +120,23 @@ def test_assessment_creation_snapshots_catalog(phase4_assessment):
     assert snapshot.question_text_snapshot.startswith("¿Existe")
     assert snapshot.criteria_snapshot[0]["text"] == "Aprobada por la dirección"
     assert snapshot.answer_options_snapshot[1]["weight"] == "1.0000"
+
+
+def test_snapshot_builder_does_not_double_attach_and_catalog_question_is_eager_loaded(
+    published_questionnaire,
+):
+    _, version_summary = published_questionnaire
+    from app.repositories.catalog import catalog_repository
+
+    version = catalog_repository.questionnaire_version_by_public_id(version_summary.public_id)
+    link = version.question_links[0]
+    revision = link.question_revision
+
+    assert "question" not in sa_inspect(revision).unloaded
+
+    snapshot = assessment_service._snapshot_question(link)
+    assert snapshot.assessment is None
+    assert snapshot.external_code_snapshot == "G-SM-A-1-TEST"
 
 
 def test_assignment_based_access_isolated(phase4_assessment, respondent_user, reviewer_user, make_user):

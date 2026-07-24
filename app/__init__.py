@@ -9,7 +9,7 @@ from flask import Flask, flash, g, redirect, render_template, request, session, 
 from flask_login import current_user, logout_user
 from flask_wtf.csrf import CSRFError
 from sqlalchemy import event, select
-from sqlalchemy.engine import Engine
+from sqlalchemy.engine import Engine, make_url
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from config import CONFIG_BY_NAME, validate_runtime_config
@@ -29,6 +29,19 @@ def _configure_sqlite(dbapi_connection, connection_record) -> None:
         cursor.close()
 
 
+def _ensure_sqlite_database_parent(app: Flask) -> None:
+    """Create the parent folder for a file-backed SQLite database."""
+    database_uri = app.config.get("SQLALCHEMY_DATABASE_URI", "")
+    url = make_url(database_uri)
+    if url.get_backend_name() != "sqlite" or not url.database or url.database == ":memory:":
+        return
+
+    database_path = Path(url.database)
+    if not database_path.is_absolute():
+        database_path = Path(app.instance_path) / database_path
+    database_path.parent.mkdir(parents=True, exist_ok=True)
+
+
 def create_app(config_name: str | None = None, config_overrides: dict | None = None) -> Flask:
     app = Flask(__name__)
     selected = config_name or __import__("os").getenv("FLASK_ENV", "development")
@@ -42,6 +55,7 @@ def create_app(config_name: str | None = None, config_overrides: dict | None = N
 
     configure_logging(app.config["LOG_LEVEL"])
     Path(app.instance_path).mkdir(parents=True, exist_ok=True)
+    _ensure_sqlite_database_parent(app)
     Path(app.config["UPLOAD_FOLDER"]).mkdir(parents=True, exist_ok=True)
     Path(app.config["CATALOG_IMPORT_FOLDER"]).mkdir(parents=True, exist_ok=True)
     Path(app.config["REPORT_FOLDER"]).mkdir(parents=True, exist_ok=True)

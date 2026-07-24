@@ -40,14 +40,15 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    configuration = current_app.extensions["migrate"].configure_args
+    # Flask-Migrate already supplies compare_type and render_as_batch through
+    # configure_args. Passing either option explicitly as well as through
+    # **configuration raises TypeError for duplicate keyword arguments.
+    configuration = dict(current_app.extensions["migrate"].configure_args)
     connectable = get_engine()
     with connectable.connect() as connection:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
-            compare_type=True,
-            render_as_batch=True,
             **configuration,
         )
         with context.begin_transaction():

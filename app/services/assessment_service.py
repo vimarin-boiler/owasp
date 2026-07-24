@@ -64,10 +64,9 @@ class AssessmentService:
         return users
 
     @staticmethod
-    def _snapshot_question(assessment: Assessment, link) -> AssessmentQuestion:
+    def _snapshot_question(link) -> AssessmentQuestion:
         revision = link.question_revision
         return AssessmentQuestion(
-            assessment=assessment,
             source_question_revision_id=revision.id,
             external_code_snapshot=revision.question.external_code,
             question_text_snapshot=revision.question_text,
@@ -101,9 +100,17 @@ class AssessmentService:
     def _replace_questions(self, assessment: Assessment, version: QuestionnaireVersion) -> None:
         if any(question.response is not None for question in assessment.questions):
             raise ConflictError("No se puede cambiar la versión porque el assessment ya tiene respuestas.")
-        assessment.questions.clear()
-        for link in sorted(version.question_links, key=lambda item: (item.sort_order, item.id)):
-            assessment.questions.append(self._snapshot_question(assessment, link))
+
+        # Build the complete snapshot collection before mutating the relationship.
+        # This prevents SQLAlchemy autoflush from observing a half-mutated
+        # collection while a catalog relationship is being resolved.
+        with db.session.no_autoflush:
+            snapshots = [
+                self._snapshot_question(link)
+                for link in sorted(version.question_links, key=lambda item: (item.sort_order, item.id))
+            ]
+            assessment.questions.clear()
+            assessment.questions.extend(snapshots)
 
     def _sync_assignments(
         self,

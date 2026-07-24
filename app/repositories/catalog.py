@@ -105,6 +105,9 @@ class CatalogRepository:
             .options(
                 selectinload(QuestionnaireVersion.question_links)
                 .selectinload(QuestionnaireVersionQuestion.question_revision)
+                .selectinload(QuestionRevision.question),
+                selectinload(QuestionnaireVersion.question_links)
+                .selectinload(QuestionnaireVersionQuestion.question_revision)
                 .selectinload(QuestionRevision.criteria),
                 selectinload(QuestionnaireVersion.question_links)
                 .selectinload(QuestionnaireVersionQuestion.question_revision)

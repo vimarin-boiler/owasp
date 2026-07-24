@@ -27,12 +27,45 @@ def env_int(name: str, default: int) -> int:
         raise RuntimeError(f"La variable {name} debe ser un entero.") from exc
 
 
+def resolve_database_url(value: str | None) -> str:
+    """Return a portable database URL and make relative SQLite paths absolute.
+
+    Flask-SQLAlchemy resolves relative SQLite paths from ``app.instance_path``.
+    The project historically documented ``sqlite:///instance/...``, which would
+    otherwise become ``<instance_path>/instance/...``. Resolving it here against
+    the project root keeps the configured location stable on Windows and Linux.
+    """
+    raw = (value or "").strip()
+    if not raw:
+        database_path = (BASE_DIR / "instance" / "samm_assessment.db").resolve()
+        return f"sqlite:///{database_path.as_posix()}"
+
+    if not raw.startswith("sqlite:///") or raw == "sqlite:///:memory:":
+        return raw
+
+    path_and_query = raw[len("sqlite:///") :]
+    path_text, separator, query = path_and_query.partition("?")
+    if not path_text or path_text.startswith("file:"):
+        return raw
+
+    database_path = Path(path_text)
+    if not database_path.is_absolute():
+        # A plain relative name belongs in Flask's instance directory. Keep
+        # compatibility with the historical ``instance/...`` value without
+        # producing an accidental ``instance/instance/...`` path.
+        if database_path.parts and database_path.parts[0].lower() == "instance":
+            database_path = (BASE_DIR / database_path).resolve()
+        else:
+            database_path = (BASE_DIR / "instance" / database_path).resolve()
+
+    normalized = f"sqlite:///{database_path.as_posix()}"
+    return f"{normalized}?{query}" if separator else normalized
+
+
 class BaseConfig:
     APP_NAME = os.getenv("APP_NAME", "NTT DevSecOps Assessment")
     SECRET_KEY = os.getenv("SECRET_KEY", "")
-    SQLALCHEMY_DATABASE_URI = os.getenv(
-        "DATABASE_URL", f"sqlite:///{BASE_DIR / 'instance' / 'samm_assessment.db'}"
-    )
+    SQLALCHEMY_DATABASE_URI = resolve_database_url(os.getenv("DATABASE_URL"))
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}
 
@@ -110,7 +143,9 @@ class BaseConfig:
     )
     PREFERRED_URL_SCHEME = "https" if FORCE_HTTPS else "http"
 
-    WTF_CSRF_TIME_LIMIT = timedelta(hours=2)
+    # Flask-WTF passes this value to ItsDangerous as max_age, which expects
+    # an integer number of seconds (or None), not datetime.timedelta.
+    WTF_CSRF_TIME_LIMIT = env_int("WTF_CSRF_TIME_LIMIT_SECONDS", 7200)
     WTF_CSRF_SSL_STRICT = True
 
     @classmethod

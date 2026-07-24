@@ -1,3 +1,16 @@
+## 0.6.5 - Hotfix creación de assessments
+
+- Evita la doble asociación de cada `AssessmentQuestion` a `Assessment.questions`.
+- Construye los snapshots bajo `db.session.no_autoflush` antes de mutar la colección ORM.
+- Precarga `QuestionRevision.question` al recuperar una versión de cuestionario.
+- Agrega pruebas de regresión para el snapshot sin asociación y la carga eager del catálogo.
+
+## 0.6.1 - Hotfix CSRF
+
+- Corrige `WTF_CSRF_TIME_LIMIT` para usar segundos enteros compatibles con ItsDangerous.
+- Agrega `WTF_CSRF_TIME_LIMIT_SECONDS` a `.env.example`.
+- Agrega una prueba de regresión para el tipo del límite CSRF.
+
 # Changelog
 
 ## 0.6.0 - Fase 6

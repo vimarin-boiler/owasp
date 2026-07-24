@@ -2,7 +2,7 @@
 
 Plataforma web segura para administrar y ejecutar assessments de madurez DevSecOps basados en OWASP SAMM. La aplicación cubre el ciclo completo: catálogo versionado, organizaciones, assessments, respuestas, evidencias, revisión, scoring, dashboards, recomendaciones, roadmap, reportes y operación productiva.
 
-**Versión de la aplicación:** 0.6.0  
+**Versión de la aplicación:** 0.6.1  
 **Runtime:** Python 3.12+  
 **Backend:** Flask, SQLAlchemy y Alembic  
 **Frontend:** Jinja2, Bootstrap 5, Bootstrap Icons y Chart.js  
@@ -416,3 +416,22 @@ Solo se crean cuando `CREATE_DEMO_DATA=true`. Los correos y contraseñas se toma
 - `docs/PRODUCTION_SECURITY_CHECKLIST.md`
 - `docs/SCORING_METHODOLOGY.md`
 - `docs/openapi-v1.yaml`
+
+## Hotfix 6.1 - CSRF time limit
+
+La configuración `WTF_CSRF_TIME_LIMIT` usa segundos enteros, porque Flask-WTF entrega el valor a ItsDangerous como `max_age`. Configure `WTF_CSRF_TIME_LIMIT_SECONDS=7200` para una vigencia de dos horas. No use `datetime.timedelta` en esta opción.
+
+## Corrección Flask-Migrate 0.6.3
+
+La configuración de Alembic se encuentra en `migrations/alembic.ini`, que es la ubicación esperada por `flask db`. Ejecute las migraciones desde la raíz del proyecto:
+
+```powershell
+flask --app run.py db upgrade
+```
+
+
+## Corrección Alembic 0.6.4
+
+Se eliminó la duplicación de `compare_type` y `render_as_batch` entre
+`app/extensions.py` y `migrations/env.py`. La configuración del modo online
+proviene exclusivamente de Flask-Migrate mediante `configure_args`.
