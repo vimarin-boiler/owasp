@@ -1,0 +1,39 @@
+{
+  "project": "NTT DevSecOps Assessment",
+  "phase": 3,
+  "version": "0.3.0",
+  "generated_on": "2026-07-24",
+  "source_workbook": {
+    "path": "data/SAMM_spreadsheet.xlsx",
+    "sha256": "c7e32c0673891d79f12596ca9ce41fa95d40e7fd8c44698333eb84d0ff6c6f2b",
+    "declared_version": "2.2.0",
+    "catalog_counts": {
+      "business_functions": 5,
+      "security_practices": 15,
+      "practice_streams": 30,
+      "maturity_levels": 3,
+      "questions": 90,
+      "answer_sets": 24,
+      "quality_criteria": 295
+    }
+  },
+  "database": {
+    "migration_head": "0002_catalog_imports",
+    "table_count": 30
+  },
+  "validation": {
+    "python_compile": "passed",
+    "jinja_templates": 35,
+    "url_for_references": 115,
+    "unresolved_url_for_references": 0,
+    "icon_references": 27,
+    "missing_icons": 0,
+    "migration_upgrade": "passed",
+    "migration_downgrade": "passed",
+    "parser_errors": 0,
+    "parser_warnings": 0,
+    "full_pytest": "not_run_missing_flask_dependencies_and_no_network",
+    "included_test_functions": 32
+  },
+  "file_count_excluding_manifest_and_checksums": 181
+}

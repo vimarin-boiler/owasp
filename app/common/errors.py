@@ -3,12 +3,12 @@ class DomainError(Exception):
 
 
 class ValidationError(DomainError):
-    pass
+    """Los datos no cumplen una regla de validación del dominio."""
 
 
 class ConflictError(DomainError):
-    pass
+    """La operación entra en conflicto con el estado actual."""
 
 
 class AuthorizationError(DomainError):
-    pass
+    """El usuario no está autorizado para ejecutar la operación."""

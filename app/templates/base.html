@@ -37,7 +37,11 @@
         {% endif %}
         <span class="nav-section">Assessment</span>
         <span class="sidebar-link disabled" aria-disabled="true">{{ icon('clipboard-check') }} <span>Assessments <small>Fase 4</small></span></span>
-        <span class="sidebar-link disabled" aria-disabled="true">{{ icon('diagram-3-fill') }} <span>Catálogo SAMM <small>Fase 3</small></span></span>
+        {% if current_user.has_role('admin') %}
+        <a class="sidebar-link {% if request.endpoint and request.endpoint.startswith('catalog.') %}active{% endif %}" href="{{ url_for('catalog.index') }}">
+          {{ icon('diagram-3-fill') }} <span>Catálogo SAMM <small>Versionado</small></span>
+        </a>
+        {% endif %}
       </nav>
       <div class="sidebar-footer">
         <span class="status-dot"></span> Plataforma disponible

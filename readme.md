@@ -1,74 +1,92 @@
-# NTT DevSecOps Assessment — Fase 2
+# NTT DevSecOps Assessment — Fase 3
 
-Base ejecutable y segura para una plataforma de assessments de madurez DevSecOps basada en OWASP SAMM.
+Plataforma web segura para administrar assessments de madurez DevSecOps basados en OWASP SAMM.
 
-Esta entrega implementa la **Fase 2: Proyecto base** definida en la especificación funcional: estructura modular Flask, configuración por entornos, modelo SQLAlchemy completo, migración inicial, autenticación, roles, administración inicial y layout Bootstrap 5.
+Esta entrega incorpora la **Fase 3: Catálogo SAMM** sobre la base ejecutable de la Fase 2. Incluye importación transaccional desde Excel, administración de la jerarquía, preguntas con revisiones inmutables, conjuntos de respuesta ponderados, versiones publicables y exportación compatible.
 
-## Capacidades incluidas
+## Capacidades disponibles
 
-- Application factory y blueprints Flask.
-- Configuración separada para desarrollo, pruebas y producción.
-- Modelo relacional de 29 tablas preparado para SQLite y PostgreSQL.
-- Migración inicial Flask-Migrate/Alembic con `upgrade` y `downgrade`.
-- Autenticación con Flask-Login y contraseñas Argon2.
-- Regeneración de sesión después del login y del cambio de contraseña.
-- Bloqueo temporal tras intentos fallidos configurables.
-- Cambio obligatorio de contraseña inicial.
-- RBAC con roles `admin`, `respondent` y `reviewer`.
-- CRUD inicial de usuarios y organizaciones.
-- Restablecimiento administrativo de contraseña.
-- UUID públicos en rutas para no exponer IDs secuenciales.
-- Auditoría de login, logout, usuarios, roles y organizaciones.
-- Protección CSRF y validación de formularios con Flask-WTF.
-- CSP, HSTS en producción, anti-clickjacking y protección MIME sniffing.
-- Rate limiting para el endpoint de login.
-- Bootstrap 5 e iconos SVG servidos localmente, sin CDN ni fuentes externas.
-- API versionada con healthcheck en `/api/v1/health`.
-- Suite pytest para autenticación, autorización, servicios, modelos, migración e IDOR.
+### Base de aplicación
 
-## Alcance de esta fase
+- Python 3.12 o superior y Flask con Application Factory.
+- SQLAlchemy 2.x, Flask-Migrate y Alembic.
+- SQLite para desarrollo, con modelos portables a PostgreSQL.
+- Autenticación Flask-Login y contraseñas Argon2.
+- RBAC para administrador, respondedor y revisor.
+- Protección CSRF, rate limiting, CSP y encabezados de seguridad.
+- Auditoría con actor, IP, User-Agent, valores anteriores y posteriores.
+- Bootstrap 5 e iconos locales con estilo corporativo NTT.
 
-Esta fase deja implementadas las entidades que utilizarán las siguientes etapas, pero aún no incorpora:
+### Catálogo SAMM
 
-- Importación del cuestionario SAMM desde Excel: **Fase 3**.
-- CRUD del catálogo, revisión y publicación de versiones: **Fase 3**.
-- Creación y ejecución de assessments, respuestas y evidencias: **Fase 4**.
-- Motor de scoring, dashboards SAMM y recomendaciones: **Fase 5**.
-- Reportes PDF/Excel y despliegue productivo completo: **Fase 6**.
+- Importación de `SAMM_spreadsheet.xlsx` mediante `openpyxl`.
+- Vista previa antes de confirmar.
+- Validación por hoja, fila y campo.
+- Verificación segura del contenedor XLSX.
+- Hash SHA-256 del archivo fuente.
+- Prevención de duplicados mediante hashes de contenido.
+- Rollback completo ante errores.
+- CRUD de funciones, prácticas, flujos y niveles.
+- Administración de conjuntos de respuestas y ponderaciones.
+- Preguntas con criterios de calidad e historial de revisiones.
+- Duplicación de preguntas.
+- Versiones de cuestionario en borrador, publicadas o archivadas.
+- Exportación a Excel de cualquier versión.
+- API autenticada de preguntas y versiones.
 
-No existen funciones simuladas para esos módulos. Los modelos y contratos de persistencia están preparados, mientras las rutas de negocio se incorporarán en su fase correspondiente.
+## Resultado del archivo incluido
 
-## Requisitos
+El archivo `data/SAMM_spreadsheet.xlsx` fue validado con el siguiente resultado:
 
-- Python 3.12 o superior.
-- SQLite 3 para desarrollo.
-- Sistema operativo Windows, Linux o macOS.
+| Elemento | Cantidad |
+|---|---:|
+| Funciones de negocio | 5 |
+| Prácticas de seguridad | 15 |
+| Flujos | 30 |
+| Niveles de madurez | 3 |
+| Preguntas | 90 |
+| Conjuntos de respuesta | 24 |
+| Criterios de calidad | 295 |
+
+No se detectaron errores ni advertencias.
 
 ## Estructura principal
 
 ```text
 samm_assessment/
 ├── app/
-│   ├── admin/                 # Gestión inicial de usuarios y organizaciones
-│   ├── api/v1/                # API versionada
-│   ├── auth/                  # Login, logout y cambio de contraseña
-│   ├── common/                # Seguridad, validación y utilidades
-│   ├── dashboard/             # Dashboard base por rol
-│   ├── models/                # 29 tablas SQLAlchemy
-│   ├── repositories/          # Acceso a datos
-│   ├── services/              # Casos de uso y reglas de negocio
-│   ├── static/                # CSS, JS, Bootstrap e iconos locales
-│   └── templates/             # Jinja2 y layout corporativo
-├── migrations/                # Alembic / Flask-Migrate
-├── scripts/                   # Utilidades de inicialización
-├── tests/                     # Pruebas automatizadas
-├── uploads/                   # Evidencias privadas, fuera de static
+│   ├── admin/                    # Usuarios, roles, organizaciones y auditoría
+│   ├── api/v1/                   # API versionada
+│   ├── auth/                     # Login y cambio de contraseña
+│   ├── catalog/                  # Interfaz del catálogo SAMM
+│   ├── common/                   # Seguridad, errores y validadores
+│   ├── dashboard/                # Dashboard por rol
+│   ├── models/                   # 30 tablas SQLAlchemy
+│   ├── repositories/             # Consultas y carga de relaciones
+│   ├── services/                 # Importación, catálogo y versionamiento
+│   ├── static/                   # CSS, JS, Bootstrap e iconos
+│   └── templates/                # Layout y componentes Jinja2
+├── data/
+│   └── SAMM_spreadsheet.xlsx     # Fuente inicial del catálogo
+├── docs/
+├── migrations/
+│   └── versions/
+│       ├── 0001_initial.py
+│       └── 0002_catalog_imports.py
+├── tests/
+├── uploads/
+├── instance/
 ├── config.py
 ├── run.py
-├── wsgi.py
 ├── requirements.txt
-└── .env.example
+└── requirements-dev.txt
 ```
+
+## Requisitos
+
+- Python 3.12 o superior.
+- SQLite 3.
+- Windows, Linux o macOS.
 
 ## Instalación en Linux o macOS
 
@@ -81,13 +99,24 @@ cp .env.example .env
 python scripts/generate_secret.py
 ```
 
-Copia el valor generado en `SECRET_KEY` dentro de `.env`. Cambia también `INITIAL_ADMIN_PASSWORD`.
+Configura en `.env` una clave segura y una contraseña inicial:
+
+```env
+SECRET_KEY=<valor-aleatorio-de-al-menos-32-caracteres>
+INITIAL_ADMIN_PASSWORD=<contraseña-temporal-segura>
+SAMM_IMPORT_FILE=data/SAMM_spreadsheet.xlsx
+SAMM_DEFAULT_VERSION=2.2.0
+```
+
+Inicializa la plataforma:
 
 ```bash
 flask --app run.py db upgrade
 flask --app run.py seed
 flask --app run.py run
 ```
+
+`flask seed` crea los roles, el administrador, la organización de demostración y, si aún no existe una versión, importa y publica el Excel configurado en `SAMM_IMPORT_FILE`.
 
 La aplicación quedará disponible en:
 
@@ -106,7 +135,7 @@ Copy-Item .env.example .env
 python .\scripts\generate_secret.py
 ```
 
-Copia el valor generado en `SECRET_KEY` dentro de `.env`. Cambia también `INITIAL_ADMIN_PASSWORD`.
+Después de configurar `.env`:
 
 ```powershell
 flask --app run.py db upgrade
@@ -114,27 +143,66 @@ flask --app run.py seed
 flask --app run.py run
 ```
 
-## Variables críticas
+## Importación desde Excel
 
-```env
-SECRET_KEY=<valor-aleatorio-de-al-menos-32-caracteres>
-DATABASE_URL=sqlite:///instance/samm_assessment.db
-INITIAL_ADMIN_EMAIL=admin@example.com
-INITIAL_ADMIN_PASSWORD=<contraseña-temporal-segura>
-SESSION_COOKIE_SECURE=false
-FORCE_HTTPS=false
+### Desde la interfaz
+
+1. Ingresa con rol administrador.
+2. Abre **Catálogo SAMM**.
+3. Selecciona **Importar Excel**.
+4. Carga el archivo `.xlsx`.
+5. Revisa el resumen y los errores por fila.
+6. Define el nombre y número de versión.
+7. Confirma como borrador o publica inmediatamente.
+
+### Desde CLI
+
+Solo validar:
+
+```bash
+flask --app run.py import-samm \
+  --file data/SAMM_spreadsheet.xlsx \
+  --dry-run
 ```
 
-En producción debes habilitar:
+Importar como borrador:
 
-```env
-FLASK_ENV=production
-SESSION_COOKIE_SECURE=true
-FORCE_HTTPS=true
-TRUST_PROXY_HEADERS=true
+```bash
+flask --app run.py import-samm \
+  --file data/SAMM_spreadsheet.xlsx \
+  --name "OWASP SAMM 2.2.0" \
+  --version 2.2.0
 ```
 
-`TRUST_PROXY_HEADERS=true` presupone que la aplicación está detrás de un reverse proxy controlado. No expongas Gunicorn directamente a redes no confiables con esta opción activa.
+Importar y publicar:
+
+```bash
+flask --app run.py import-samm \
+  --file data/SAMM_spreadsheet.xlsx \
+  --name "OWASP SAMM 2.2.0" \
+  --version 2.2.0 \
+  --publish
+```
+
+## Versionamiento
+
+- Cada pregunta tiene un identificador estable y una o más revisiones.
+- Editar una pregunta crea la siguiente revisión.
+- Las revisiones anteriores nunca se sobrescriben.
+- Una versión enlaza revisiones concretas y ordenadas.
+- Publicar una versión archiva la versión publicada anterior.
+- Los conjuntos de respuesta ya utilizados no pueden modificarse.
+- Los elementos jerárquicos utilizados no permiten alterar código, nombre ni relación padre.
+
+## Exportación
+
+Desde el detalle de una versión usa **Exportar**. Se genera un workbook con:
+
+- `Metadata`
+- `imp-questions`
+- `imp-answers`
+
+El resultado puede volver a validarse con el importador.
 
 ## Migraciones
 
@@ -144,41 +212,31 @@ Aplicar todas las migraciones:
 flask --app run.py db upgrade
 ```
 
-Revisar la versión actual:
+Revertir la última migración:
 
 ```bash
-flask --app run.py db current
+flask --app run.py db downgrade
 ```
 
-Crear una migración después de modificar modelos:
+La Fase 3 agrega la tabla `catalog_imports`, llevando el esquema a 30 tablas.
 
-```bash
-flask --app run.py db migrate -m "descripcion del cambio"
+## API v1
+
+### Healthcheck público
+
+```http
+GET /api/v1/health
 ```
 
-La migración generada debe revisarse antes de ejecutar `upgrade`.
+### Catálogo autenticado
 
-## Datos iniciales
-
-El comando siguiente es idempotente:
-
-```bash
-flask --app run.py seed
+```http
+GET /api/v1/questions/
+GET /api/v1/questions/{uuid}/
+GET /api/v1/questionnaire-versions/
 ```
 
-Crea:
-
-- Roles administrador, respondedor y revisor.
-- Administrador configurado mediante variables de entorno.
-- Organización de demostración.
-
-La cuenta inicial queda marcada para cambio obligatorio de contraseña.
-
-También puedes crear un administrador interactivo:
-
-```bash
-flask --app run.py create-admin
-```
+Las rutas del catálogo requieren un usuario autenticado con rol administrador, revisor o respondedor.
 
 ## Pruebas
 
@@ -193,101 +251,58 @@ Con cobertura:
 pytest --cov=app --cov-report=term-missing --cov-report=html
 ```
 
-Verificación rápida:
+La suite incluye pruebas de:
 
-```bash
-python scripts/smoke_check.py
-```
+- Parser del Excel real.
+- Validación de hojas obligatorias.
+- Importación completa.
+- Reimportación idempotente.
+- Rollback.
+- Revisiones de preguntas.
+- Exportación Excel.
+- Autorización de rutas.
+- Migraciones.
 
-## API base
+## Seguridad específica del importador
 
-```http
-GET /api/v1/health
-```
+- Solo acepta `.xlsx`.
+- Usa `secure_filename` para el nombre presentado.
+- Genera un nombre interno aleatorio.
+- Almacena cargas temporales fuera de `static`.
+- Limita el tamaño del archivo.
+- Valida cantidad y tamaño descomprimido de los elementos internos.
+- Rechaza relaciones de compresión anómalas.
+- Calcula SHA-256.
+- No ejecuta macros ni fórmulas.
+- Procesa el libro en modo lectura y `data_only`.
+- Ejecuta la aplicación del catálogo dentro de una única transacción.
+- Elimina el archivo temporal después de confirmar.
 
-Respuesta:
-
-```json
-{
-  "application": "NTT DevSecOps Assessment",
-  "status": "ok",
-  "version": "0.2.0"
-}
-```
-
-Los endpoints funcionales indicados en la especificación serán incorporados incrementalmente sin romper el prefijo `/api/v1/`.
-
-## Seguridad implementada
-
-### Identidad y sesión
-
-- Argon2 mediante `argon2-cffi`.
-- Política mínima configurable.
-- Mensajes de login no enumerables.
-- Verificación de hash ficticio para usuarios inexistentes.
-- Bloqueo temporal configurable.
-- Session protection fuerte.
-- Sesión regenerada después de autenticar.
-- Timeout por inactividad y timeout absoluto.
-- Cookies `HttpOnly`, `SameSite` y `Secure` en producción.
-- Logout únicamente mediante POST protegido por CSRF.
-
-### Autorización
-
-- Decoradores de roles aplicados en servidor.
-- Carga exclusiva de usuarios activos.
-- UUID públicos para navegación.
-- Verificación de recursos por UUID y respuesta 404 para recursos inexistentes.
-- Protección para impedir que el administrador desactive su propia cuenta o se quite su rol.
-
-### Aplicación web
-
-- CSRF global.
-- Escape automático Jinja2.
-- ORM SQLAlchemy, sin SQL concatenado.
-- Content Security Policy sin `unsafe-inline`.
-- Recursos frontend locales.
-- `X-Frame-Options: DENY`.
-- `X-Content-Type-Options: nosniff`.
-- `Referrer-Policy` y `Permissions-Policy`.
-- HSTS al operar por HTTPS en producción.
-- Correlation ID por solicitud.
-- Páginas de error sin stack trace.
-
-### Auditoría
-
-Se registran actor, acción, entidad, UUID público, fecha, IP, User-Agent, valores anteriores y posteriores, resultado y correlation ID. Las claves sensibles son redactadas antes de persistirse.
-
-## Base de datos y portabilidad
-
-- Los modelos utilizan SQLAlchemy 2.x y tipos portables.
-- Los enums se almacenan como texto validado en lugar de enums nativos del motor.
-- Los cambios de esquema se gestionan con Alembic.
-- SQLite activa claves foráneas, WAL y `busy_timeout`.
-- No se usa SQL específico de SQLite en la lógica funcional.
-- La futura migración a PostgreSQL requiere cambiar `DATABASE_URL`, instalar el driver y ejecutar las migraciones en una base vacía.
-
-Ejemplo futuro:
+## Configuración relevante
 
 ```env
-DATABASE_URL=postgresql+psycopg://user:password@database:5432/samm_assessment
+CATALOG_IMPORT_FOLDER=instance/catalog_imports
+MAX_CATALOG_IMPORT_MB=15
+SAMM_IMPORT_FILE=data/SAMM_spreadsheet.xlsx
+SAMM_DEFAULT_VERSION=2.2.0
 ```
 
-## Recursos visuales
+## Documentación
 
-Bootstrap y el subconjunto de Bootstrap Icons se incluyen localmente en `app/static/vendor`. No se incluyen logotipos corporativos protegidos ni archivos de fuentes. El logotipo autorizado podrá agregarse posteriormente en `app/static/img`.
+- `docs/PHASE_3_DELIVERY.md`
+- `docs/IMPORT_FORMAT.md`
+- `docs/CATALOG_VERSIONING.md`
+- `docs/VALIDATION_REPORT_PHASE3.md`
+- Documentación de las fases 1 y 2 conservada en `docs/`.
 
-## Documentos de la entrega
+## Alcance pendiente
 
-- `docs/PHASE_2_DELIVERY.md`
-- `docs/SECURITY_BASELINE.md`
-- `docs/DATA_MODEL_PHASE2.md`
-- `docs/VALIDATION_REPORT.md`
+La Fase 4 incorporará:
 
-## Credenciales de demostración
+- Creación de assessments.
+- Asignación de respondedores y revisores.
+- Instanciación de preguntas desde una versión.
+- Respuestas, borradores y transiciones de estado.
+- Evidencias privadas y flujo de revisión.
 
-No se fijan credenciales dentro del código. Los valores se obtienen desde `.env` y el usuario inicial debe cambiar su contraseña en el primer acceso.
-
-## Próxima fase
-
-La Fase 3 incorporará el parser de `SAMM_spreadsheet.xlsx`, previsualización transaccional, catálogo jerárquico, criterios de calidad, respuestas ponderadas y versionamiento publicable del cuestionario.
+Las fases 5 y 6 incorporarán scoring, dashboards, brechas, recomendaciones, roadmap, reportes y despliegue productivo completo.

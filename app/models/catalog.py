@@ -8,6 +8,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    JSON,
     Numeric,
     String,
     Text,
@@ -15,8 +16,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.enums import QuestionRevisionStatus, QuestionnaireStatus
-from app.extensions import db
+from app.enums import CatalogImportStatus, QuestionRevisionStatus, QuestionnaireStatus
 from app.models.base import ActorAuditMixin, BaseModel, SoftDeleteMixin, enum_column
 
 
@@ -264,3 +264,33 @@ class QuestionnaireVersionQuestion(BaseModel):
         back_populates="question_links"
     )
     question_revision: Mapped[QuestionRevision] = relationship()
+
+
+class CatalogImport(BaseModel):
+    __tablename__ = "catalog_imports"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    source_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    source_file_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    source_version: Mapped[str | None] = mapped_column(String(80))
+    status: Mapped[CatalogImportStatus] = mapped_column(
+        enum_column(CatalogImportStatus, "catalog_import_status"),
+        default=CatalogImportStatus.PREVIEWED,
+        nullable=False,
+        index=True,
+    )
+    requested_version_name: Mapped[str | None] = mapped_column(String(180))
+    requested_version_number: Mapped[str | None] = mapped_column(String(80))
+    summary_json: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    errors_json: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
+    preview_json: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    temporary_file_path: Mapped[str | None] = mapped_column(String(500))
+    created_by_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    questionnaire_version_id: Mapped[int | None] = mapped_column(
+        ForeignKey("questionnaire_versions.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+
+    questionnaire_version: Mapped[QuestionnaireVersion | None] = relationship()

@@ -24,6 +24,13 @@ class QuestionRevisionStatus(StrEnum):
     ARCHIVED = "archived"
 
 
+class CatalogImportStatus(StrEnum):
+    PREVIEWED = "previewed"
+    INVALID = "invalid"
+    IMPORTED = "imported"
+    FAILED = "failed"
+
+
 class AssessmentStatus(StrEnum):
     DRAFT = "draft"
     CONFIGURED = "configured"

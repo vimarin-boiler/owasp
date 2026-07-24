@@ -7,9 +7,9 @@
   <div>
     <span class="section-label">Vista general</span>
     <h1>Dashboard de madurez DevSecOps</h1>
-    <p>Supervisa usuarios, organizaciones y actividad de la plataforma. Los indicadores SAMM se habilitarán al incorporar el catálogo y los assessments.</p>
+    <p>Supervisa usuarios, organizaciones y actividad de la plataforma. El catálogo OWASP SAMM ya está disponible; los indicadores de ejecución se habilitarán al crear assessments.</p>
   </div>
-  <span class="environment-badge">Fase 2 · Base operativa</span>
+  <span class="environment-badge">Fase 3 · Catálogo SAMM</span>
 </div>
 
 {% if is_admin %}
@@ -27,15 +27,15 @@
     </div>
   </div>
   <div class="col-sm-6 col-xl-3">
-    <div class="metric-card muted-metric">
-      <span class="metric-icon">{{ icon('clipboard-check', 22) }}</span>
-      <div><span>Assessments activos</span><strong>0</strong><small>Disponible en Fase 4</small></div>
+    <div class="metric-card">
+      <span class="metric-icon">{{ icon('patch-question', 22) }}</span>
+      <div><span>Preguntas SAMM</span><strong>{{ catalog_questions }}</strong><small>Revisiones vigentes activas</small></div>
     </div>
   </div>
   <div class="col-sm-6 col-xl-3">
-    <div class="metric-card muted-metric">
-      <span class="metric-icon">{{ icon('graph-up-arrow', 22) }}</span>
-      <div><span>Madurez promedio</span><strong>—</strong><small>Disponible en Fase 5</small></div>
+    <div class="metric-card">
+      <span class="metric-icon">{{ icon('layers-fill', 22) }}</span>
+      <div><span>Versiones</span><strong>{{ questionnaire_versions }}</strong><small>Publicadas, borrador o archivadas</small></div>
     </div>
   </div>
 </div>
@@ -71,6 +71,7 @@
       <div class="quick-actions">
         <a href="{{ url_for('admin.user_create') }}">{{ icon('person-plus-fill') }}<span><strong>Crear usuario</strong><small>Asignar roles y acceso</small></span>{{ icon('chevron-right') }}</a>
         <a href="{{ url_for('admin.organization_create') }}">{{ icon('building') }}<span><strong>Crear organización</strong><small>Registrar un cliente</small></span>{{ icon('chevron-right') }}</a>
+        <a href="{{ url_for('catalog.index') }}">{{ icon('diagram-3-fill') }}<span><strong>Administrar catálogo</strong><small>Preguntas, versiones e importaciones</small></span>{{ icon('chevron-right') }}</a>
         <a href="{{ url_for('admin.audit') }}">{{ icon('shield-check') }}<span><strong>Revisar auditoría</strong><small>Consultar acciones recientes</small></span>{{ icon('chevron-right') }}</a>
       </div>
     </section>

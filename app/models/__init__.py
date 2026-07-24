@@ -2,6 +2,7 @@ from app.models.assessment import Assessment, AssessmentQuestion, AssessmentUser
 from app.models.audit import ApplicationSetting, AuditLog, Notification
 from app.models.catalog import (
     AnswerOption,
+    CatalogImport,
     AnswerSet,
     BusinessFunction,
     MaturityLevel,
@@ -32,6 +33,7 @@ __all__ = [
     "MaturityLevel",
     "AnswerSet",
     "AnswerOption",
+    "CatalogImport",
     "Question",
     "QuestionRevision",
     "QuestionQualityCriterion",

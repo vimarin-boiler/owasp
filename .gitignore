@@ -17,3 +17,6 @@ backups/*
 .DS_Store
 .vscode/
 .idea/
+
+instance/catalog_imports/*
+!instance/catalog_imports/.gitkeep

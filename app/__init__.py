@@ -43,6 +43,7 @@ def create_app(config_name: str | None = None, config_overrides: dict | None = N
     configure_logging(app.config["LOG_LEVEL"])
     Path(app.instance_path).mkdir(parents=True, exist_ok=True)
     Path(app.config["UPLOAD_FOLDER"]).mkdir(parents=True, exist_ok=True)
+    Path(app.config["CATALOG_IMPORT_FOLDER"]).mkdir(parents=True, exist_ok=True)
 
     if app.config.get("TRUST_PROXY_HEADERS", True):
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
@@ -62,10 +63,12 @@ def create_app(config_name: str | None = None, config_overrides: dict | None = N
     from app.admin import bp as admin_bp
     from app.api import v1_bp
     from app.auth import bp as auth_bp
+    from app.catalog import bp as catalog_bp
     from app.dashboard import bp as dashboard_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(catalog_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(v1_bp)
 

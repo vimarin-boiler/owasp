@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template
 from flask_login import current_user, login_required
 
-from app.repositories import audit_repository, organization_repository, user_repository
+from app.repositories import audit_repository, catalog_repository, organization_repository, user_repository
 
 bp = Blueprint("dashboard", __name__, template_folder="templates")
 
@@ -15,5 +15,7 @@ def index():
             active_users=user_repository.count_active(),
             active_organizations=organization_repository.count_active(),
             recent_activity=audit_repository.recent(8),
+            catalog_questions=len(catalog_repository.questions(active_only=True)),
+            questionnaire_versions=len(catalog_repository.questionnaire_versions()),
         )
     return render_template("dashboard/index.html", **context)

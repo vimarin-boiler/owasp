@@ -1,0 +1,6 @@
+{% extends 'base.html' %}{% from 'macros/forms.html' import render_field %}{% from 'macros/icons.html' import icon %}
+{% block title %}Importar SAMM | {{ app_name }}{% endblock %}{% block page_context %}Validación de archivo OWASP SAMM{% endblock %}
+{% block content %}
+<div class="page-header"><div><span class="section-label">Importación</span><h1>Cargar cuestionario SAMM</h1><p>Se validarán las hojas <code>imp-questions</code> e <code>imp-answers</code> antes de modificar el catálogo.</p></div><a class="btn btn-outline-secondary" href="{{ url_for('catalog.imports') }}">{{ icon('arrow-left') }} Volver</a></div>
+<div class="row justify-content-center"><div class="col-xl-8"><section class="content-card import-drop-card"><form method="post" enctype="multipart/form-data" novalidate>{{ form.hidden_tag() }}<div class="import-icon">{{ icon('file-earmark-spreadsheet', 42) }}</div>{{ render_field(form.workbook) }}<div class="security-note mb-4"><strong>Validación segura</strong><span>Solo se acepta XLSX. El archivo queda en un directorio privado temporal y se elimina después de confirmar.</span></div><div class="form-actions"><a class="btn btn-outline-secondary" href="{{ url_for('catalog.imports') }}">Cancelar</a><button class="btn btn-primary" type="submit">{{ icon('search') }} Validar y previsualizar</button></div></form></section></div></div>
+{% endblock %}

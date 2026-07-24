@@ -1,7 +1,7 @@
 from app.extensions import db
 
 
-def test_complete_phase_two_schema_is_registered(app):
+def test_complete_phase_three_schema_is_registered(app):
     expected = {
         "users", "roles", "user_roles", "organizations", "organization_memberships",
         "business_functions", "security_practices", "practice_streams", "maturity_levels",
@@ -10,6 +10,6 @@ def test_complete_phase_two_schema_is_registered(app):
         "assessments", "assessment_users", "assessment_questions", "assessment_responses",
         "response_history", "evidences", "reviews", "recommendations", "audit_logs",
         "application_settings", "notifications", "assessment_score_snapshots",
-        "assessment_score_items",
+        "assessment_score_items", "catalog_imports",
     }
     assert expected == set(db.metadata.tables)

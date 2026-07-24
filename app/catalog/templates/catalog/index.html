@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% from 'macros/icons.html' import icon %}
+{% block title %}Catálogo SAMM | {{ app_name }}{% endblock %}
+{% block page_context %}Gobierno del catálogo OWASP SAMM{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><span class="section-label">Fase 3</span><h1>Catálogo SAMM</h1><p>Administra la jerarquía, preguntas, alternativas y versiones inmutables del cuestionario.</p></div>
+  <a class="btn btn-primary" href="{{ url_for('catalog.import_new') }}">{{ icon('file-earmark-arrow-up') }} Importar Excel</a>
+</div>
+<div class="row g-3 mb-4">
+  {% for label, value, icon_name in [('Funciones', counts.functions, 'diagram-3-fill'), ('Prácticas', counts.practices, 'shield-check'), ('Flujos', counts.streams, 'git'), ('Niveles', counts.levels, 'bar-chart-steps'), ('Preguntas', counts.questions, 'patch-question'), ('Versiones', counts.versions, 'layers-fill')] %}
+  <div class="col-6 col-xl-2"><div class="metric-card compact"><span class="metric-icon">{{ icon(icon_name) }}</span><div><span>{{ label }}</span><strong>{{ value }}</strong></div></div></div>
+  {% endfor %}
+</div>
+<div class="row g-4">
+  <div class="col-xl-7">
+    <section class="content-card">
+      <div class="card-heading"><div><span class="section-label">Estructura</span><h2>Administración jerárquica</h2></div></div>
+      <div class="catalog-grid">
+        <a href="{{ url_for('catalog.functions') }}">{{ icon('diagram-3-fill') }}<span><strong>Funciones de negocio</strong><small>Gobierno, Diseño, Implementación, Verificación y Operación.</small></span>{{ icon('chevron-right') }}</a>
+        <a href="{{ url_for('catalog.practices') }}">{{ icon('shield-check') }}<span><strong>Prácticas de seguridad</strong><small>Prácticas agrupadas dentro de cada función.</small></span>{{ icon('chevron-right') }}</a>
+        <a href="{{ url_for('catalog.streams') }}">{{ icon('git') }}<span><strong>Flujos</strong><small>Actividades o subcategorías de cada práctica.</small></span>{{ icon('chevron-right') }}</a>
+        <a href="{{ url_for('catalog.levels') }}">{{ icon('bar-chart-steps') }}<span><strong>Niveles de madurez</strong><small>Niveles configurables y su puntaje máximo.</small></span>{{ icon('chevron-right') }}</a>
+        <a href="{{ url_for('catalog.answer_sets') }}">{{ icon('ui-checks-grid') }}<span><strong>Conjuntos de respuesta</strong><small>Alternativas y ponderaciones reutilizables.</small></span>{{ icon('chevron-right') }}</a>
+        <a href="{{ url_for('catalog.questions') }}">{{ icon('patch-question') }}<span><strong>Preguntas y revisiones</strong><small>Versionamiento sin sobrescribir contenido histórico.</small></span>{{ icon('chevron-right') }}</a>
+      </div>
+    </section>
+  </div>
+  <div class="col-xl-5">
+    <section class="content-card mb-4">
+      <div class="card-heading"><div><span class="section-label">Versiones</span><h2>Cuestionarios recientes</h2></div><a href="{{ url_for('catalog.versions') }}" class="btn btn-sm btn-outline-secondary">Ver todas</a></div>
+      {% for version in latest_versions %}
+      <a class="version-row" href="{{ url_for('catalog.version_detail', version_public_id=version.public_id) }}"><span><strong>{{ version.version_number }}</strong><small>{{ version.name }}</small></span><span class="badge text-bg-{{ 'success' if version.status.value == 'published' else 'secondary' }}">{{ version.status.value }}</span></a>
+      {% else %}<div class="empty-state"><p>Aún no existen versiones.</p></div>{% endfor %}
+    </section>
+    <section class="content-card">
+      <div class="card-heading"><div><span class="section-label">Trazabilidad</span><h2>Importaciones recientes</h2></div><a href="{{ url_for('catalog.imports') }}" class="btn btn-sm btn-outline-secondary">Historial</a></div>
+      {% for item in recent_imports %}
+      <a class="version-row" href="{{ url_for('catalog.import_preview', import_public_id=item.public_id) }}"><span><strong>{{ item.source_name }}</strong><small>{{ item.created_at.strftime('%d-%m-%Y %H:%M') }}</small></span><span class="badge text-bg-light border">{{ item.status.value }}</span></a>
+      {% else %}<div class="empty-state"><p>No hay importaciones registradas.</p></div>{% endfor %}
+    </section>
+  </div>
+</div>
+{% endblock %}

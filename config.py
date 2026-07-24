@@ -48,6 +48,13 @@ class BaseConfig:
     }
     MAX_EVIDENCE_FILES_PER_QUESTION = env_int("MAX_EVIDENCE_FILES_PER_QUESTION", 10)
 
+    CATALOG_IMPORT_FOLDER = os.getenv(
+        "CATALOG_IMPORT_FOLDER", str(BASE_DIR / "instance" / "catalog_imports")
+    )
+    MAX_CATALOG_IMPORT_MB = env_int("MAX_CATALOG_IMPORT_MB", 15)
+    SAMM_IMPORT_FILE = os.getenv("SAMM_IMPORT_FILE", "")
+    SAMM_DEFAULT_VERSION = os.getenv("SAMM_DEFAULT_VERSION", "2.2.0")
+
     SESSION_COOKIE_NAME = os.getenv("SESSION_COOKIE_NAME", "samm_session")
     SESSION_COOKIE_HTTPONLY = env_bool("SESSION_COOKIE_HTTPONLY", True)
     SESSION_COOKIE_SECURE = env_bool("SESSION_COOKIE_SECURE", False)

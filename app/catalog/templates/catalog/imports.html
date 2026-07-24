@@ -1,0 +1,8 @@
+{% extends 'base.html' %}{% from 'macros/icons.html' import icon %}
+{% block title %}Importaciones | {{ app_name }}{% endblock %}{% block page_context %}Importación del catálogo SAMM{% endblock %}
+{% block content %}
+<div class="page-header"><div><span class="section-label">Catálogo</span><h1>Historial de importaciones</h1><p>Consulta validaciones, errores y versiones creadas desde archivos Excel.</p></div><a class="btn btn-primary" href="{{ url_for('catalog.import_new') }}">{{ icon('file-earmark-arrow-up') }} Nueva importación</a></div>
+<section class="content-card"><div class="table-responsive"><table class="table modern-table align-middle"><thead><tr><th>Archivo</th><th>Hash</th><th>Resumen</th><th>Estado</th><th>Fecha</th><th></th></tr></thead><tbody>
+{% for item in imports %}<tr><td><strong>{{ item.source_name }}</strong><br><small class="text-muted">SAMM {{ item.source_version or 'sin versión' }}</small></td><td><code>{{ item.source_file_hash[:12] }}…</code></td><td>{{ item.summary_json.get('questions', 0) }} preguntas · {{ item.summary_json.get('answer_sets', 0) }} respuestas</td><td><span class="badge text-bg-{{ 'success' if item.status.value == 'imported' else ('danger' if item.status.value in ['invalid','failed'] else 'secondary') }}">{{ item.status.value }}</span></td><td>{{ item.created_at.strftime('%d-%m-%Y %H:%M') }}</td><td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('catalog.import_preview', import_public_id=item.public_id) }}">Detalle</a></td></tr>{% else %}<tr><td colspan="6"><div class="empty-state"><p>No hay importaciones registradas.</p></div></td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

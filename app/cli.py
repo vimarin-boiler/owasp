@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 import click
+from pathlib import Path
 from flask import current_app
 from flask.cli import with_appcontext
 from sqlalchemy import select
 
+from app.common.errors import DomainError
 from app.common.validators import normalize_email
 from config import validate_runtime_config
 from app.extensions import db
-from app.models import Organization, Role, User, UserRole
+from app.models import Organization, QuestionnaireVersion, Role, User, UserRole
 from app.services.auth_service import auth_service
+from app.services.samm_import_service import catalog_import_service
 
 ROLE_SEED = (
     ("admin", "Administrador", "Administración global de la plataforma."),
@@ -34,6 +37,7 @@ def register_cli(app) -> None:
     app.cli.add_command(seed)
     app.cli.add_command(create_admin)
     app.cli.add_command(check_config)
+    app.cli.add_command(import_samm)
 
 
 @click.command("seed")
@@ -81,6 +85,31 @@ def seed() -> None:
         click.echo("Organización de demostración creada.")
 
     db.session.commit()
+
+    import_file = current_app.config.get("SAMM_IMPORT_FILE", "").strip()
+    has_version = db.session.scalar(select(QuestionnaireVersion.id).limit(1))
+    if import_file and not has_version:
+        source = Path(import_file)
+        if not source.is_absolute():
+            source = Path(current_app.root_path).parent / source
+        if not source.is_file():
+            raise click.ClickException(f"SAMM_IMPORT_FILE no existe: {source}")
+        record = catalog_import_service.create_preview_from_path(source, actor_id=admin.id)
+        if record.status.value == "invalid":
+            raise click.ClickException("El cuestionario SAMM configurado contiene errores de validación.")
+        version_number = record.source_version or current_app.config["SAMM_DEFAULT_VERSION"]
+        version = catalog_import_service.confirm(
+            record,
+            version_name=f"OWASP SAMM {version_number}",
+            version_number=version_number,
+            description=f"Versión inicial importada desde {record.source_name}.",
+            publish=True,
+            actor_id=admin.id,
+        )
+        click.echo(f"Cuestionario SAMM importado y publicado: {version.version_number}")
+    elif has_version:
+        click.echo("El catálogo SAMM ya contiene una versión; se omitió la importación inicial.")
+
     click.echo("Seed completado correctamente.")
 
 
@@ -130,3 +159,54 @@ def check_config() -> None:
     click.echo(f"Base de datos: {current_app.config['SQLALCHEMY_DATABASE_URI'].split('@')[-1]}")
     click.echo(f"Uploads: {current_app.config['UPLOAD_FOLDER']}")
     click.echo("Configuración válida.")
+
+
+@click.command("import-samm")
+@click.option("--file", "file_path", required=True, type=click.Path(exists=True, dir_okay=False, path_type=__import__("pathlib").Path), help="Archivo SAMM .xlsx.")
+@click.option("--name", "version_name", default=None, help="Nombre de la versión a crear.")
+@click.option("--version", "version_number", default=None, help="Número de versión único.")
+@click.option("--description", default=None, help="Descripción de la versión.")
+@click.option("--publish/--draft", default=False, help="Publicar la versión al terminar.")
+@click.option("--dry-run", is_flag=True, help="Solo valida y muestra el resumen.")
+@with_appcontext
+def import_samm(file_path, version_name: str | None, version_number: str | None, description: str | None, publish: bool, dry_run: bool) -> None:
+    """Valida e importa un cuestionario OWASP SAMM desde Excel."""
+    actor = db.session.scalar(select(User).join(UserRole).join(Role).where(Role.code == "admin").order_by(User.id))
+    record = catalog_import_service.create_preview_from_path(file_path, actor_id=actor.id if actor else None)
+    summary = record.summary_json
+    click.echo(f"Archivo: {record.source_name}")
+    click.echo(f"SHA-256: {record.source_file_hash}")
+    click.echo(f"Funciones: {summary.get('business_functions', 0)}")
+    click.echo(f"Prácticas: {summary.get('security_practices', 0)}")
+    click.echo(f"Flujos: {summary.get('practice_streams', 0)}")
+    click.echo(f"Niveles: {summary.get('maturity_levels', 0)}")
+    click.echo(f"Preguntas: {summary.get('questions', 0)}")
+    click.echo(f"Conjuntos de respuesta: {summary.get('answer_sets', 0)}")
+    if record.errors_json:
+        for issue in record.errors_json:
+            location = f"{issue.get('sheet')}:{issue.get('row')}" if issue.get('row') else issue.get('sheet')
+            click.echo(f"[{issue.get('severity', 'error').upper()}] {location} - {issue.get('message')}")
+    if record.status.value == "invalid":
+        raise click.ClickException("El archivo contiene errores y no fue importado.")
+    if dry_run:
+        click.echo("Validación completada; no se modificó el catálogo.")
+        return
+    resolved_version = version_number or record.source_version or current_app.config["SAMM_DEFAULT_VERSION"]
+    resolved_name = version_name or f"OWASP SAMM {resolved_version}"
+    try:
+        version = catalog_import_service.confirm(
+            record,
+            version_name=resolved_name,
+            version_number=resolved_version,
+            description=description or f"Importada desde {record.source_name}.",
+            publish=publish,
+            actor_id=actor.id if actor else None,
+        )
+    except (DomainError, ValueError, OSError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    except Exception as exc:  # pragma: no cover - protección de último recurso
+        current_app.logger.exception("CLI SAMM import failed", exc_info=exc)
+        raise click.ClickException(
+            "Ocurrió un error interno durante la importación. Consulta los logs de la aplicación."
+        ) from exc
+    click.echo(f"Versión creada: {version.version_number} ({version.status.value})")
