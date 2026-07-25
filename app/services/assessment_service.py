@@ -119,27 +119,56 @@ class AssessmentService:
         reviewer_ids: list[int],
         actor_id: int,
     ) -> None:
-        respondents = self._validate_users(respondent_ids, "respondent")
-        reviewers = self._validate_users(reviewer_ids, "reviewer")
-        assessment.assignments.clear()
-        for index, user in enumerate(sorted(respondents, key=lambda item: item.display_name.casefold())):
-            assessment.assignments.append(
-                AssessmentUser(
-                    user_id=user.id,
-                    assignment_role=AssignmentRole.RESPONDENT,
-                    is_lead=index == 0,
-                    assigned_by_id=actor_id,
-                )
-            )
-        for index, user in enumerate(sorted(reviewers, key=lambda item: item.display_name.casefold())):
-            assessment.assignments.append(
-                AssessmentUser(
-                    user_id=user.id,
-                    assignment_role=AssignmentRole.REVIEWER,
-                    is_lead=index == 0,
-                    assigned_by_id=actor_id,
-                )
-            )
+        """Reconcile assignment rows without recreating unchanged records.
+
+        Clearing the relationship and appending equivalent rows in the same
+        transaction can make SQLAlchemy emit INSERT statements before the
+        orphan DELETE statements. SQLite then sees both the old and new row
+        and rejects the INSERT because of ``uq_assessment_users_assignment``.
+
+        The reconciliation below preserves existing assignments, removes only
+        rows that are no longer desired, and inserts only genuinely new rows.
+        It also keeps the original ``assigned_at`` metadata for assignments
+        that did not change.
+        """
+        respondents = sorted(
+            self._validate_users(list(dict.fromkeys(respondent_ids)), "respondent"),
+            key=lambda item: item.display_name.casefold(),
+        )
+        reviewers = sorted(
+            self._validate_users(list(dict.fromkeys(reviewer_ids)), "reviewer"),
+            key=lambda item: item.display_name.casefold(),
+        )
+
+        desired: dict[tuple[int, AssignmentRole], bool] = {}
+        for index, user in enumerate(respondents):
+            desired[(user.id, AssignmentRole.RESPONDENT)] = index == 0
+        for index, user in enumerate(reviewers):
+            desired[(user.id, AssignmentRole.REVIEWER)] = index == 0
+
+        with db.session.no_autoflush:
+            existing = {
+                (assignment.user_id, assignment.assignment_role): assignment
+                for assignment in list(assessment.assignments)
+            }
+
+            for key, assignment in existing.items():
+                if key not in desired:
+                    assessment.assignments.remove(assignment)
+
+            for (user_id, role), is_lead in desired.items():
+                assignment = existing.get((user_id, role))
+                if assignment is None:
+                    assessment.assignments.append(
+                        AssessmentUser(
+                            user_id=user_id,
+                            assignment_role=role,
+                            is_lead=is_lead,
+                            assigned_by_id=actor_id,
+                        )
+                    )
+                else:
+                    assignment.is_lead = is_lead
 
     def create(
         self,
