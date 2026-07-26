@@ -13,7 +13,7 @@ from wtforms import (
     SubmitField,
     TextAreaField,
 )
-from wtforms.validators import DataRequired, Length, NumberRange, Optional, Regexp, ValidationError
+from wtforms.validators import DataRequired, InputRequired, Length, NumberRange, Optional, Regexp, ValidationError
 
 CODE_RE = r"^[A-Za-z0-9][A-Za-z0-9._-]*$"
 
@@ -35,7 +35,7 @@ class BusinessFunctionForm(FlaskForm):
     code = StringField("Código", validators=[DataRequired(), Length(max=40), Regexp(CODE_RE)])
     name = StringField("Nombre", validators=[DataRequired(), Length(max=160)])
     description = TextAreaField("Descripción", validators=[Optional(), Length(max=3000)])
-    sort_order = IntegerField("Orden", validators=[DataRequired(), NumberRange(min=0, max=9999)], default=0)
+    sort_order = IntegerField("Orden", validators=[InputRequired(), NumberRange(min=0, max=9999)], default=0)
     is_active = BooleanField("Activo", default=True)
     submit = SubmitField("Guardar función")
 
@@ -45,7 +45,7 @@ class SecurityPracticeForm(FlaskForm):
     code = StringField("Código", validators=[DataRequired(), Length(max=40), Regexp(CODE_RE)])
     name = StringField("Nombre", validators=[DataRequired(), Length(max=180)])
     description = TextAreaField("Descripción", validators=[Optional(), Length(max=3000)])
-    sort_order = IntegerField("Orden", validators=[DataRequired(), NumberRange(min=0, max=9999)], default=0)
+    sort_order = IntegerField("Orden", validators=[InputRequired(), NumberRange(min=0, max=9999)], default=0)
     is_active = BooleanField("Activo", default=True)
     submit = SubmitField("Guardar práctica")
 
@@ -55,7 +55,7 @@ class PracticeStreamForm(FlaskForm):
     code = StringField("Código", validators=[DataRequired(), Length(max=40), Regexp(CODE_RE)])
     name = StringField("Nombre", validators=[DataRequired(), Length(max=180)])
     description = TextAreaField("Descripción", validators=[Optional(), Length(max=3000)])
-    sort_order = IntegerField("Orden", validators=[DataRequired(), NumberRange(min=0, max=9999)], default=0)
+    sort_order = IntegerField("Orden", validators=[InputRequired(), NumberRange(min=0, max=9999)], default=0)
     is_active = BooleanField("Activo", default=True)
     submit = SubmitField("Guardar flujo")
 
@@ -64,8 +64,8 @@ class MaturityLevelForm(FlaskForm):
     level_number = IntegerField("Número de nivel", validators=[DataRequired(), NumberRange(min=1, max=99)])
     name = StringField("Nombre", validators=[DataRequired(), Length(max=120)])
     description = TextAreaField("Descripción", validators=[Optional(), Length(max=3000)])
-    max_score = DecimalField("Puntaje máximo", validators=[DataRequired(), NumberRange(min=Decimal("0"), max=Decimal("100"))], places=4, default=Decimal("1"))
-    sort_order = IntegerField("Orden", validators=[DataRequired(), NumberRange(min=0, max=9999)], default=0)
+    max_score = DecimalField("Puntaje máximo", validators=[InputRequired(), NumberRange(min=Decimal("0"), max=Decimal("100"))], places=4, default=Decimal("1"))
+    sort_order = IntegerField("Orden", validators=[InputRequired(), NumberRange(min=0, max=9999)], default=0)
     is_active = BooleanField("Activo", default=True)
     submit = SubmitField("Guardar nivel")
 
@@ -75,13 +75,13 @@ class AnswerSetForm(FlaskForm):
     name = StringField("Nombre", validators=[DataRequired(), Length(max=180)])
     description = TextAreaField("Descripción", validators=[Optional(), Length(max=3000)])
     option_a_text = StringField("Alternativa A", validators=[DataRequired(), Length(max=1000)])
-    option_a_weight = DecimalField("Ponderación A", validators=[DataRequired(), NumberRange(min=0, max=1)], places=4, default=Decimal("0"))
+    option_a_weight = DecimalField("Ponderación A", validators=[InputRequired(), NumberRange(min=0, max=1)], places=4, default=Decimal("0"))
     option_b_text = StringField("Alternativa B", validators=[DataRequired(), Length(max=1000)])
-    option_b_weight = DecimalField("Ponderación B", validators=[DataRequired(), NumberRange(min=0, max=1)], places=4, default=Decimal("0.25"))
+    option_b_weight = DecimalField("Ponderación B", validators=[InputRequired(), NumberRange(min=0, max=1)], places=4, default=Decimal("0.25"))
     option_c_text = StringField("Alternativa C", validators=[DataRequired(), Length(max=1000)])
-    option_c_weight = DecimalField("Ponderación C", validators=[DataRequired(), NumberRange(min=0, max=1)], places=4, default=Decimal("0.5"))
+    option_c_weight = DecimalField("Ponderación C", validators=[InputRequired(), NumberRange(min=0, max=1)], places=4, default=Decimal("0.5"))
     option_d_text = StringField("Alternativa D", validators=[DataRequired(), Length(max=1000)])
-    option_d_weight = DecimalField("Ponderación D", validators=[DataRequired(), NumberRange(min=0, max=1)], places=4, default=Decimal("1"))
+    option_d_weight = DecimalField("Ponderación D", validators=[InputRequired(), NumberRange(min=0, max=1)], places=4, default=Decimal("1"))
     is_active = BooleanField("Activo", default=True)
     submit = SubmitField("Guardar conjunto")
 
